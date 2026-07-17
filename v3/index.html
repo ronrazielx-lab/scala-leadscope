@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scala Biodesign · LeadScope</title>
+<meta name="description" content="Turn LinkedIn into a ranked pipeline of protein-engineering buyers — scored, explained, and ready to contact.">
+<meta name="theme-color" content="#0e9e86">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Scala Biodesign · LeadScope">
+<meta property="og:description" content="Turn LinkedIn into a ranked pipeline of protein-engineering buyers. Signal-driven, a reason behind every lead, warm paths before cold outreach.">
+<meta property="og:site_name" content="Scala Biodesign · LeadScope">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Scala Biodesign · LeadScope">
+<meta name="twitter:description" content="Signal-driven lead generation from LinkedIn for protein-engineering sales.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧬</text></svg>">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  img { max-width: 100%; }
+  :root {
+    --bg: #f6f8f9;
+    --surface: #ffffff;
+    --surface-2: #eef2f3;
+    --ink: #10201f;
+    --ink-soft: #3f5250;
+    --ink-faint: #6b7f7c;
+    --line: #dde5e4;
+    --accent: #0e9e86;
+    --accent-deep: #0b6f5f;
+    --accent-wash: #e2f2ee;
+    --cold: #6b8fb0;
+    --warm: #e8a13a;
+    --hot: #e2603b;
+    --good: #0e9e86;
+    --shadow: 0 1px 2px rgba(16,32,31,.05), 0 8px 28px rgba(16,32,31,.06);
+    --shadow-lg: 0 2px 6px rgba(16,32,31,.08), 0 20px 60px rgba(16,32,31,.12);
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+    --display: "Inter Tight", "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
+    --radius: 14px;
+    --maxw: 1080px;
+    --ring-track: #e6ecec;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0b1413; --surface: #101d1b; --surface-2: #162624;
+      --ink: #e8f0ee; --ink-soft: #a9bcb8; --ink-faint: #7b918d; --line: #22322f;
+      --accent: #2bc9ac; --accent-deep: #7ee6d0; --accent-wash: #14312b;
+      --cold: #7ba2c4; --warm: #f0b25a; --hot: #f07a56; --good: #2bc9ac;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 28px rgba(0,0,0,.35);
+      --shadow-lg: 0 2px 6px rgba(0,0,0,.4), 0 20px 60px rgba(0,0,0,.5);
+      --ring-track: #22322f;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f6f8f9; --surface: #ffffff; --surface-2: #eef2f3;
+    --ink: #10201f; --ink-soft: #3f5250; --ink-faint: #6b7f7c; --line: #dde5e4;
+    --accent: #0e9e86; --accent-deep: #0b6f5f; --accent-wash: #e2f2ee;
+    --cold: #6b8fb0; --warm: #e8a13a; --hot: #e2603b; --good: #0e9e86;
+    --shadow: 0 1px 2px rgba(16,32,31,.05), 0 8px 28px rgba(16,32,31,.06);
+    --shadow-lg: 0 2px 6px rgba(16,32,31,.08), 0 20px 60px rgba(16,32,31,.12);
+    --ring-track: #e6ecec;
+  }
+  :root[data-theme="dark"] {
+    --bg: #0b1413; --surface: #101d1b; --surface-2: #162624;
+    --ink: #e8f0ee; --ink-soft: #a9bcb8; --ink-faint: #7b918d; --line: #22322f;
+    --accent: #2bc9ac; --accent-deep: #7ee6d0; --accent-wash: #14312b;
+    --cold: #7ba2c4; --warm: #f0b25a; --hot: #f07a56; --good: #2bc9ac;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 28px rgba(0,0,0,.35);
+    --shadow-lg: 0 2px 6px rgba(0,0,0,.4), 0 20px 60px rgba(0,0,0,.5);
+    --ring-track: #22322f;
+  }
+
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+  section { padding: 62px 0; border-top: 1px solid var(--line); }
+  section:first-of-type { border-top: none; }
+
+  h1, h2, h3 { font-family: var(--display); font-weight: 680; letter-spacing: -0.02em; text-wrap: balance; margin: 0; }
+  h2 { font-size: clamp(1.5rem, 3vw, 2.1rem); line-height: 1.12; }
+  h3 { font-size: 1.06rem; letter-spacing: -0.01em; }
+  p { margin: 0; }
+
+  .eyebrow { font-size: .72rem; font-weight: 650; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
+  .lede { color: var(--ink-soft); font-size: 1.05rem; max-width: 60ch; }
+
+  /* reveal */
+  .reveal { opacity: 0; transform: translateY(18px); transition: opacity .65s cubic-bezier(.2,.7,.2,1), transform .65s cubic-bezier(.2,.7,.2,1); }
+  .reveal.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } }
+
+  /* ---------- hero ---------- */
+  .hero { padding: 74px 0 58px; }
+  .hero-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 48px; align-items: center; }
+  .brandline { display: flex; align-items: center; gap: 11px; margin-bottom: 26px; }
+  .mark { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, var(--accent), var(--accent-deep)); position: relative; flex: none; }
+  .mark::after { content: ""; position: absolute; inset: 0;
+    background: radial-gradient(circle at 30% 32%, rgba(255,255,255,.85) 0 2px, transparent 2.5px), radial-gradient(circle at 68% 66%, rgba(255,255,255,.85) 0 2px, transparent 2.5px), linear-gradient(120deg, transparent 44%, rgba(255,255,255,.55) 45% 47%, transparent 48%); }
+  .brandname { font-family: var(--display); font-weight: 640; font-size: .96rem; letter-spacing: -.01em; }
+  .brandname b { color: var(--accent); font-weight: 720; }
+  .hero h1 { font-size: clamp(2.1rem, 5.2vw, 3.5rem); line-height: 1.03; font-weight: 720; letter-spacing: -.035em; }
+  .hero h1 .hl { color: var(--accent); }
+  .hero .lede { margin-top: 22px; font-size: 1.16rem; }
+  .hero-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; }
+  .tag { font-size: .78rem; font-weight: 550; padding: 6px 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: var(--ink-soft); }
+  .tag b { color: var(--ink); font-weight: 650; }
+
+  /* calm radar */
+  .radar-panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow-lg); }
+  .radar-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-faint); font-weight: 650; }
+  .radar-head b { color: var(--accent); font-family: var(--mono); font-weight: 600; letter-spacing: .02em; }
+  .radar-box { position: relative; aspect-ratio: 1/1; width: 100%; max-width: 340px; margin: 8px auto 0; }
+  canvas#radar { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .radar-legend { display: flex; justify-content: center; gap: 16px; margin-top: 12px; font-size: .7rem; color: var(--ink-faint); flex-wrap: wrap; }
+  .radar-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .radar-legend i { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* ---------- insight band ---------- */
+  .insight { background: var(--ink); color: #eaf3f1; border-radius: var(--radius); padding: 40px; box-shadow: var(--shadow-lg); }
+  :root[data-theme="dark"] .insight { background: linear-gradient(160deg, #16302b, #0d1c1a); border: 1px solid var(--line); }
+  @media (prefers-color-scheme: dark) { .insight { background: linear-gradient(160deg, #16302b, #0d1c1a); border: 1px solid var(--line); } }
+  .insight .eyebrow { color: var(--accent-deep); }
+  :root[data-theme="dark"] .insight .eyebrow { color: var(--accent); }
+  .insight h2 { color: #fff; max-width: 22ch; }
+  .insight p { color: #c3d6d2; margin-top: 16px; max-width: 62ch; }
+  .insight .big { display: flex; gap: 40px; margin-top: 30px; flex-wrap: wrap; }
+  .insight .big div span { display: block; font-family: var(--display); font-size: 2.2rem; font-weight: 720; color: var(--accent-deep); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  :root[data-theme="dark"] .insight .big div span { color: var(--accent); }
+  .insight .big div small { color: #9fb5b1; font-size: .84rem; }
+
+  /* ---------- architecture ---------- */
+  .arch { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; margin-top: 36px; align-items: stretch; }
+  .layer { position: relative; padding: 0 8px; }
+  .layer-inner { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 14px; height: 100%; box-shadow: var(--shadow); position: relative; z-index: 2; transition: transform .3s, border-color .3s; }
+  .layer-inner:hover { transform: translateY(-3px); border-color: var(--accent); }
+  .layer:not(:last-child) .layer-inner::after { content: "→"; position: absolute; right: -19px; top: 50%; transform: translateY(-50%); color: var(--accent); font-weight: 800; font-size: 1.1rem; z-index: 3; }
+  .layer .num { font-family: var(--mono); font-size: .7rem; color: var(--accent); font-weight: 700; }
+  .layer h4 { margin: 6px 0 8px; font-family: var(--display); font-size: .96rem; font-weight: 650; letter-spacing: -.01em; }
+  .layer ul { margin: 0; padding-left: 15px; font-size: .78rem; color: var(--ink-soft); line-height: 1.5; }
+  .layer li { margin: 3px 0; }
+  .layer .tool { display: inline-block; margin-top: 10px; font-size: .68rem; font-family: var(--mono); color: var(--ink-faint); background: var(--surface-2); padding: 3px 7px; border-radius: 5px; }
+
+  /* ---------- scoring gauges ---------- */
+  .score-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 32px; }
+  .gauge { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); text-align: center; }
+  .ring-box { position: relative; width: 118px; height: 118px; margin: 2px auto 14px; }
+  .ring-box svg { transform: rotate(-90deg); display: block; }
+  .ring-bg { stroke: var(--ring-track); }
+  .ring-val { stroke-linecap: round; transition: stroke-dashoffset 1.4s cubic-bezier(.2,.8,.2,1); }
+  .ring-num { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--display); font-weight: 730; font-size: 1.8rem; letter-spacing: -.02em; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .gauge .role { font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; }
+  .gauge.fit .role { color: var(--accent); } .gauge.fit .ring-val { stroke: var(--accent); }
+  .gauge.intent .role { color: var(--warm); } .gauge.intent .ring-val { stroke: var(--warm); }
+  .gauge.warmth .role { color: var(--hot); } .gauge.warmth .ring-val { stroke: var(--hot); }
+  .gauge h3 { margin-bottom: 4px; }
+  .gauge .desc { color: var(--ink-soft); font-size: .87rem; }
+  .gauge ul { text-align: left; margin: 14px 0 0; padding-left: 16px; font-size: .82rem; color: var(--ink-faint); }
+  .gauge li { margin: 3px 0; }
+  .formula { margin-top: 26px; text-align: center; font-family: var(--mono); font-size: .92rem; color: var(--ink-soft); background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+  .formula b.f { color: var(--accent); } .formula b.i { color: var(--warm); } .formula b.w { color: var(--hot); }
+
+  /* ---------- lead card with animated bars ---------- */
+  .mock-frame { margin-top: 32px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 18px; padding: 26px; box-shadow: var(--shadow); }
+  .lead-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; box-shadow: var(--shadow-lg); max-width: 560px; margin: 0 auto; }
+  .lc-top { display: flex; align-items: center; gap: 14px; }
+  .lc-avatar { width: 46px; height: 46px; border-radius: 50%; flex: none; background: linear-gradient(135deg, var(--accent), var(--accent-deep)); color: #fff; display: grid; place-items: center; font-family: var(--display); font-weight: 700; font-size: 1rem; }
+  .lc-name { font-family: var(--display); font-weight: 650; font-size: 1.02rem; }
+  .lc-role { font-size: .82rem; color: var(--ink-faint); }
+  .lc-score { margin-left: auto; text-align: center; flex: none; background: var(--accent-wash); border-radius: 10px; padding: 6px 12px; }
+  .lc-score b { font-family: var(--display); font-size: 1.3rem; color: var(--accent-deep); display: block; line-height: 1; }
+  :root[data-theme="dark"] .lc-score b { color: var(--accent); }
+  .lc-score small { font-size: .62rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); }
+  .lc-bars { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 18px 0; }
+  .lc-bar .lb { font-size: .64rem; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-faint); display: flex; justify-content: space-between; margin-bottom: 5px; font-weight: 600; }
+  .lc-bar .track { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+  .lc-bar .fill { height: 100%; border-radius: 3px; width: 0; transition: width 1.3s cubic-bezier(.2,.8,.2,1); }
+  .lc-bar.f .fill { background: var(--accent); } .lc-bar.f .val { color: var(--accent); }
+  .lc-bar.i .fill { background: var(--warm); } .lc-bar.i .val { color: var(--warm); }
+  .lc-bar.w .fill { background: var(--hot); } .lc-bar.w .val { color: var(--hot); }
+  .lc-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  .pill { font-size: .72rem; font-weight: 550; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink-soft); }
+  .lc-why { background: var(--surface-2); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 12px 14px; font-size: .85rem; color: var(--ink-soft); }
+  .lc-why b { color: var(--ink); font-weight: 640; }
+  .lc-draft { margin-top: 14px; border: 1px dashed var(--line); border-radius: 10px; padding: 12px 14px; font-size: .84rem; color: var(--ink-soft); font-style: italic; }
+  .lc-draft .tagline { font-style: normal; font-size: .64rem; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 650; margin-bottom: 6px; }
+  .lc-actions { display: flex; gap: 10px; margin-top: 16px; }
+  .btn { flex: 1; text-align: center; font-size: .84rem; font-weight: 600; padding: 10px; border-radius: 9px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-soft); }
+  .btn.primary { background: var(--accent); color: #fff; border-color: transparent; }
+  :root[data-theme="dark"] .btn.primary { color: #05100e; }
+  @media (prefers-color-scheme: dark) { .btn.primary { color: #05100e; } }
+
+  /* ---------- kanban ---------- */
+  .kanban { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 30px; overflow-x: auto; }
+  .kcol { background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 12px; min-width: 0; }
+  .kcol h4 { font-size: .74rem; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-faint); margin: 0 0 4px; display: flex; justify-content: space-between; }
+  .kcol h4 span { color: var(--accent); }
+  .kmini { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; margin-top: 8px; box-shadow: var(--shadow); }
+  .kmini .nm { font-size: .78rem; font-weight: 600; }
+  .kmini .rl { font-size: .68rem; color: var(--ink-faint); }
+  .kmini .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 5px; }
+  .dot.hot { background: var(--hot); } .dot.warm { background: var(--warm); } .dot.cold { background: var(--cold); }
+
+  /* ---------- roadmap ---------- */
+  .road { margin-top: 34px; }
+  .phase { display: grid; grid-template-columns: 132px 1fr; gap: 24px; padding: 20px 0; border-top: 1px dashed var(--line); }
+  .phase:first-child { border-top: none; }
+  .phase .when { font-family: var(--mono); font-size: .78rem; color: var(--accent); font-weight: 600; }
+  .phase .when small { display: block; color: var(--ink-faint); font-weight: 400; margin-top: 2px; }
+  .phase h3 { margin-bottom: 6px; }
+  .phase p { color: var(--ink-soft); font-size: .9rem; }
+  .phase .ships { margin-top: 8px; font-size: .82rem; color: var(--ink-faint); }
+  .phase .ships b { color: var(--ink-soft); font-weight: 600; }
+
+  /* ---------- cost gears ---------- */
+  .cost-note { margin-top: 14px; font-size: .82rem; color: var(--ink-faint); }
+  .gears { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 32px; }
+  .gear { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px 22px; box-shadow: var(--shadow); }
+  .gear-now { border-top: 3px solid var(--accent); }
+  .gear-later { border-top: 3px solid var(--cold); }
+  .gear-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; gap: 12px; }
+  .gear-tag { font-family: var(--display); font-weight: 650; font-size: 1rem; letter-spacing: -.01em; }
+  .gear-now .gear-tag { color: var(--accent-deep); }
+  :root[data-theme="dark"] .gear-now .gear-tag { color: var(--accent); }
+  .gear-later .gear-tag { color: var(--ink-soft); }
+  .gear-total { font-family: var(--display); font-weight: 720; font-size: 1.5rem; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .gear-total small { font-size: .72rem; font-weight: 500; color: var(--ink-faint); letter-spacing: 0; }
+  .gtable { width: 100%; border-collapse: collapse; margin-top: 6px; }
+  .gtable td { padding: 8px 0; font-size: .84rem; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
+  .gtable tr:last-child td { border-bottom: none; }
+  .gtable td.lname { color: var(--ink); font-weight: 600; }
+  .gtable td.gp { color: var(--ink-faint); }
+  .gtable td.gv { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .gear-note { margin-top: 10px; font-size: .78rem; color: var(--ink-faint); font-style: italic; }
+
+  /* ---------- compliance ---------- */
+  .note { display: flex; gap: 16px; margin-top: 30px; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--warm); border-radius: 10px; padding: 20px 22px; box-shadow: var(--shadow); }
+  .note .badge { flex: none; font-family: var(--display); font-weight: 720; color: var(--warm); font-size: 1.1rem; }
+  .note p { font-size: .9rem; color: var(--ink-soft); }
+  .note b { color: var(--ink); }
+
+  footer { padding: 40px 0 60px; color: var(--ink-faint); font-size: .82rem; text-align: center; }
+  footer .mark { display: inline-block; vertical-align: middle; margin-right: 8px; }
+
+  @media (max-width: 860px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 34px; }
+    .score-grid { grid-template-columns: 1fr; }
+    .arch { grid-template-columns: 1fr; gap: 14px; }
+    .layer:not(:last-child) .layer-inner::after { content: "↓"; right: 50%; top: auto; bottom: -18px; transform: translateX(50%); }
+    .layer { padding: 0; }
+    .kanban { grid-template-columns: repeat(5, minmax(150px, 1fr)); }
+    .phase { grid-template-columns: 1fr; gap: 6px; }
+    .gears { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="brandline">
+        <div class="mark"></div>
+        <div class="brandname">Scala Biodesign · <b>LeadScope</b></div>
+      </div>
+      <h1>Turn LinkedIn into a <span class="hl">ranked pipeline</span> of protein-engineering buyers.</h1>
+      <p class="lede">A sales intelligence dashboard that watches the small, knowable universe of people who buy computational protein design — scores them, tells you <em>why</em> each one is a lead, and lets you reach out without leaving the screen.</p>
+      <div class="hero-tags">
+        <span class="tag"><b>Signal-driven</b>, not spray-and-pray</span>
+        <span class="tag">A reason behind <b>every</b> lead</span>
+        <span class="tag">Warm paths <b>before</b> cold outreach</span>
+      </div>
+    </div>
+    <div class="radar-panel reveal">
+      <div class="radar-head"><span>Live buyer radar</span><b>watching · 2,847</b></div>
+      <div class="radar-box"><canvas id="radar" width="360" height="360"></canvas></div>
+      <div class="radar-legend">
+        <span><i style="background:var(--accent)"></i> ICP match</span>
+        <span><i style="background:var(--warm)"></i> Intent</span>
+        <span><i style="background:var(--hot)"></i> Warm path</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section>
+  <div class="wrap reveal">
+    <div class="insight">
+      <div class="eyebrow">The strategic bet</div>
+      <h2>Our buyers are a small, identifiable universe — so precision beats volume.</h2>
+      <p>There are only so many Heads of Protein Engineering, Antibody Engineering and Structural Biology in the world, sitting inside a countable set of biopharma and biotech companies. We don't need to scrape millions of profiles. We need to <b style="color:#fff">continuously watch the right few thousand people</b> and catch the moment they signal a need.</p>
+      <div class="big">
+        <div><span class="count" data-to="4" data-suf="k">0</span><small>relevant buyer-role people, globally</small></div>
+        <div><span class="count" data-to="10">0</span><small>direct competitors whose audiences we monitor</small></div>
+        <div><span class="count" data-to="3">0</span><small>scores that rank every lead — fit, intent, warmth</small></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap reveal">
+    <div class="eyebrow">How it works</div>
+    <h2>Five layers, one flow — from raw signal to booked meeting.</h2>
+    <div class="arch">
+      <div class="layer"><div class="layer-inner"><div class="num">01</div><h4>Sources</h4><ul><li>Target account &amp; buyer list</li><li>Competitor post engagers</li><li>Hiring &amp; funding signals</li><li>Job-change alerts</li></ul><span class="tool">self-scraper → API later</span></div></div>
+      <div class="layer"><div class="layer-inner"><div class="num">02</div><h4>Enrichment</h4><ul><li>Verified role &amp; company</li><li>Firmographics vs. ICP</li><li>Work email + profile</li><li>Dedupe &amp; clean</li></ul><span class="tool">Claude → Apollo later</span></div></div>
+      <div class="layer"><div class="layer-inner"><div class="num">03</div><h4>Scoring engine</h4><ul><li>ICP-fit model</li><li>Intent from signals</li><li>Warm-path detection</li><li>AI "why this lead"</li></ul><span class="tool">Claude</span></div></div>
+      <div class="layer"><div class="layer-inner"><div class="num">04</div><h4>Dashboard</h4><ul><li>Ranked pipeline</li><li>Evidence per lead</li><li>Account (ABM) view</li><li>Funnel analytics</li></ul><span class="tool">web app</span></div></div>
+      <div class="layer"><div class="layer-inner"><div class="num">05</div><h4>Outreach</h4><ul><li>AI-drafted message</li><li>Send from dashboard</li><li>Sequences &amp; replies</li><li>CRM sync</li></ul><span class="tool">assisted send → Unipile later</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap reveal">
+    <div class="eyebrow">The ranking model</div>
+    <h2>Every lead carries three scores — so the team always knows what to work first.</h2>
+    <p class="lede">This is the core of the product: not a longer list, but a <em>ranked</em> one, with the reasoning attached.</p>
+    <div class="score-grid">
+      <div class="gauge fit">
+        <div class="ring-box">
+          <svg width="118" height="118" viewBox="0 0 118 118"><circle class="ring-bg" cx="59" cy="59" r="50" fill="none" stroke-width="10"/><circle class="ring-val" cx="59" cy="59" r="50" fill="none" stroke-width="10" data-pct="95" stroke-dasharray="314.16" stroke-dashoffset="314.16"/></svg>
+          <div class="ring-num">95</div>
+        </div>
+        <div class="role">◆ Fit</div>
+        <h3>Do they match our ICP?</h3>
+        <p class="desc">How closely the person and company match Scala's ideal customer profile.</p>
+        <ul><li>Active biologics / antibody pipeline</li><li>In-house protein-engineering team</li><li>Structural-biology function</li><li>Buyer-role seniority &amp; R&amp;D budget</li></ul>
+      </div>
+      <div class="gauge intent">
+        <div class="ring-box">
+          <svg width="118" height="118" viewBox="0 0 118 118"><circle class="ring-bg" cx="59" cy="59" r="50" fill="none" stroke-width="10"/><circle class="ring-val" cx="59" cy="59" r="50" fill="none" stroke-width="10" data-pct="88" stroke-dasharray="314.16" stroke-dashoffset="314.16"/></svg>
+          <div class="ring-num">88</div>
+        </div>
+        <div class="role">▲ Intent</div>
+        <h3>Are they signaling a need now?</h3>
+        <p class="desc">Fresh behavior that suggests an active problem or evaluation.</p>
+        <ul><li>Engaged with a competitor's post</li><li>Hiring protein / antibody engineers</li><li>Published on a hard-target problem</li><li>New funding or program launch</li></ul>
+      </div>
+      <div class="gauge warmth">
+        <div class="ring-box">
+          <svg width="118" height="118" viewBox="0 0 118 118"><circle class="ring-bg" cx="59" cy="59" r="50" fill="none" stroke-width="10"/><circle class="ring-val" cx="59" cy="59" r="50" fill="none" stroke-width="10" data-pct="76" stroke-dasharray="314.16" stroke-dashoffset="314.16"/></svg>
+          <div class="ring-num">76</div>
+        </div>
+        <div class="role">● Warmth</div>
+        <h3>Is there a way in?</h3>
+        <p class="desc">Whether we can reach them warm instead of cold — the big conversion lever.</p>
+        <ul><li>2nd-degree connection to the team</li><li>Engaged with Scala's content</li><li>Shared event / community / alumni</li><li>Mutual introduction available</li></ul>
+      </div>
+    </div>
+    <div class="formula">Priority = <b class="f">Fit</b> &nbsp;×&nbsp; <b class="i">Intent</b> &nbsp;+&nbsp; <b class="w">Warmth</b> boost &nbsp;&nbsp;→&nbsp;&nbsp; the top of the queue is always the best next conversation</div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap reveal">
+    <div class="eyebrow">What the team sees</div>
+    <h2>A lead card that answers "who, why, and what do I say?" at a glance.</h2>
+    <div class="mock-frame">
+      <div class="lead-card">
+        <div class="lc-top">
+          <div class="lc-avatar">DR</div>
+          <div><div class="lc-name">Dr. Dana R.</div><div class="lc-role">Head of Protein Engineering · Mid-cap biopharma</div></div>
+          <div class="lc-score"><b>92</b><small>Priority</small></div>
+        </div>
+        <div class="lc-bars">
+          <div class="lc-bar f"><div class="lb"><span>◆ Fit</span><span class="val">95</span></div><div class="track"><div class="fill" data-w="95"></div></div></div>
+          <div class="lc-bar i"><div class="lb"><span>▲ Intent</span><span class="val">88</span></div><div class="track"><div class="fill" data-w="88"></div></div></div>
+          <div class="lc-bar w"><div class="lb"><span>● Warm</span><span class="val">76</span></div><div class="track"><div class="fill" data-w="76"></div></div></div>
+        </div>
+        <div class="lc-pills">
+          <span class="pill">Antibody pipeline</span>
+          <span class="pill">Structural biology team</span>
+          <span class="pill">Warm: 2nd-degree intro</span>
+        </div>
+        <div class="lc-why"><b>Why this lead:</b> Commented on Cradle's antibody-optimization post 3 days ago, and her team has an open req for a senior antibody engineer. Company runs multiple biologics programs — strong ICP match on every axis.</div>
+        <div class="lc-draft">
+          <div class="tagline">✎ AI-drafted opener</div>
+          "Hi Dana — saw your note on Cradle's developability thread. We've been solving the same expression/stability bottleneck for antibody teams; happy to share how a couple of groups approached it…"
+        </div>
+        <div class="lc-actions"><div class="btn">View evidence</div><div class="btn primary">Send via LinkedIn</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap reveal">
+    <div class="eyebrow">The pipeline</div>
+    <h2>One board, from first signal to booked meeting.</h2>
+    <div class="kanban">
+      <div class="kcol"><h4>New signals <span>24</span></h4><div class="kmini"><div class="nm"><span class="dot cold"></span>M. Chen</div><div class="rl">Structural Biology Lead</div></div><div class="kmini"><div class="nm"><span class="dot warm"></span>A. Novak</div><div class="rl">VP Discovery</div></div></div>
+      <div class="kcol"><h4>Qualified <span>11</span></h4><div class="kmini"><div class="nm"><span class="dot hot"></span>Dr. Dana R.</div><div class="rl">Head, Protein Eng.</div></div><div class="kmini"><div class="nm"><span class="dot warm"></span>J. Okoye</div><div class="rl">Antibody Eng. Lead</div></div></div>
+      <div class="kcol"><h4>Contacted <span>8</span></h4><div class="kmini"><div class="nm"><span class="dot hot"></span>S. Patel</div><div class="rl">CSO</div></div><div class="kmini"><div class="nm"><span class="dot cold"></span>L. Bianchi</div><div class="rl">Enzyme Eng.</div></div></div>
+      <div class="kcol"><h4>Replied <span>3</span></h4><div class="kmini"><div class="nm"><span class="dot hot"></span>R. Adler</div><div class="rl">SVP R&amp;D</div></div></div>
+      <div class="kcol"><h4>Meeting <span>2</span></h4><div class="kmini"><div class="nm"><span class="dot hot"></span>T. Meyer</div><div class="rl">Head, Biologics</div></div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap reveal">
+    <div class="eyebrow">Build plan</div>
+    <h2>Shipped in phases — value in weeks, not quarters.</h2>
+    <div class="road">
+      <div class="phase"><div class="when">Phase 1<small>~3–4 weeks</small></div><div><h3>Ranked pipeline &amp; the "why"</h3><p>The dashboard, enrichment, the three-score model and AI-generated lead reasoning — fed by an imported target list and manual signal drops.</p><div class="ships"><b>You can:</b> see a scored, explained pipeline and work it top-down.</div></div></div>
+      <div class="phase"><div class="when">Phase 2<small>~3–4 weeks</small></div><div><h3>Automated signal collection</h3><p>Scheduled monitoring of competitor post engagement, hiring signals, funding and job changes — leads appear on the board on their own.</p><div class="ships"><b>You can:</b> wake up to fresh, high-intent leads every day.</div></div></div>
+      <div class="phase"><div class="when">Phase 3<small>~3–4 weeks</small></div><div><h3>Outreach from the dashboard</h3><p>Send LinkedIn messages / InMail and email in-app, with sequences, reply tracking and warm-path routing — all from your own accounts, rate-safe.</p><div class="ships"><b>You can:</b> run the whole motion without leaving the screen.</div></div></div>
+      <div class="phase"><div class="when">Phase 4<small>ongoing</small></div><div><h3>Analytics &amp; optimization</h3><p>Funnel conversion, response-rate by signal type and message, and CRM sync — so we learn which signals actually turn into meetings.</p><div class="ships"><b>You can:</b> double down on what converts and prune what doesn't.</div></div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap reveal">
+    <div class="eyebrow">Running cost</div>
+    <h2>Two gears: prove it inside a $150 budget, then scale on paid APIs.</h2>
+    <p class="lede">We spend the starter budget on the one thing that's hardest to fake — signal collection — and let AI cover enrichment and reasoning. Once the concept is proven, we swap in the full API stack behind the same dashboard for reliability and volume.</p>
+    <div class="gears">
+      <div class="gear gear-now">
+        <div class="gear-head"><span class="gear-tag">Gear 1 · Prove it</span><span class="gear-total">~$120<small>/mo · fits $150 budget</small></span></div>
+        <table class="gtable">
+          <tr><td class="lname">Signals + automation</td><td class="gp">PhantomBuster Starter</td><td class="gv">$69</td></tr>
+          <tr><td class="lname">AI reasoning</td><td class="gp">Claude API</td><td class="gv">~$40</td></tr>
+          <tr><td class="lname">Enrichment</td><td class="gp">Scraped + Claude</td><td class="gv">$0</td></tr>
+          <tr><td class="lname">Hosting</td><td class="gp">$5 VPS / local</td><td class="gv">~$10</td></tr>
+          <tr><td class="lname">Buffer</td><td class="gp">AI overage / actors</td><td class="gv">~$30</td></tr>
+        </table>
+        <p class="gear-note">One versatile tool for signals, data &amp; assisted outreach — AI does the rest.</p>
+      </div>
+      <div class="gear gear-later">
+        <div class="gear-head"><span class="gear-tag">Gear 2 · Scale it</span><span class="gear-total">~$400–700<small>/mo</small></span></div>
+        <table class="gtable">
+          <tr><td class="lname">Research surface</td><td class="gp">Sales Navigator</td><td class="gv">$120–160</td></tr>
+          <tr><td class="lname">Enrichment</td><td class="gp">Apollo / PDL</td><td class="gv">$100–150</td></tr>
+          <tr><td class="lname">Signal collection</td><td class="gp">PhantomBuster / Apify</td><td class="gv">$70–140</td></tr>
+          <tr><td class="lname">Outreach API</td><td class="gp">Unipile (~€5/acct)</td><td class="gv">$15–40</td></tr>
+          <tr><td class="lname">AI + hosting</td><td class="gp">Claude + app host</td><td class="gv">$95–210</td></tr>
+        </table>
+        <p class="gear-note">Reliable, higher-volume, risk shifted to managed vendors.</p>
+      </div>
+    </div>
+    <p class="cost-note">Same product, same dashboard — only the plumbing behind the integration layer changes. 2026 list-price estimates for planning.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap reveal">
+    <div class="eyebrow">Done responsibly</div>
+    <h2>Built to protect the team's LinkedIn accounts.</h2>
+    <div class="note">
+      <div class="badge">!</div>
+      <p>Scraping and automation violate LinkedIn's terms and risk account bans. In the <b>prove-it phase</b> we accept a measured, rate-limited amount of this on a single rep's account to validate the design cheaply. Once proven, we shift to <b>licensed data APIs</b> and <b>managed services</b> that move the risk off your team's accounts. Throughout, outreach stays <b>human-controlled and personalized</b> — never mass-blasting.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span class="mark"></span>
+    <b>Scala Biodesign · LeadScope</b> — sales intelligence pipeline concept · planning draft, 2026
+  </div>
+</footer>
+
+<script>
+(function () {
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* reveal */
+  var revs = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window && !reduce) {
+    var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }); }, { threshold: 0.12 });
+    revs.forEach(function (r) { io.observe(r); });
+  } else { revs.forEach(function (r) { r.classList.add('in'); }); }
+
+  /* count-up */
+  function runCount(el) {
+    var to = parseFloat(el.getAttribute('data-to'));
+    var suf = el.getAttribute('data-suf') || '';
+    function render(v) { el.innerHTML = v + (suf ? suf + '+' : ''); }
+    if (reduce) { render(to); return; }
+    var dur = 1200, t0 = null;
+    function step(ts) { if (!t0) t0 = ts; var p = Math.min((ts - t0) / dur, 1); var e = 1 - Math.pow(1 - p, 3); render(Math.round(to * e)); if (p < 1) requestAnimationFrame(step); }
+    requestAnimationFrame(step);
+  }
+  var counted = false, band = document.querySelector('.insight .big');
+  if (band && 'IntersectionObserver' in window) {
+    var cio = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting && !counted) { counted = true; document.querySelectorAll('.count').forEach(runCount); } }); }, { threshold: 0.4 });
+    cio.observe(band);
+  } else { document.querySelectorAll('.count').forEach(runCount); }
+
+  /* rings + bars on view */
+  function fillRing(c) { var pct = parseFloat(c.getAttribute('data-pct')), len = 314.16; c.style.strokeDashoffset = len - len * pct / 100; }
+  function fillBar(f) { f.style.width = f.getAttribute('data-w') + '%'; }
+  function observeFill(sel, fn) {
+    var box = document.querySelector(sel);
+    if (!box) return;
+    if ('IntersectionObserver' in window) {
+      var o = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { box.querySelectorAll('[data-pct],[data-w]').forEach(fn); o.unobserve(e.target); } }); }, { threshold: 0.3 });
+      o.observe(box);
+    } else { box.querySelectorAll('[data-pct],[data-w]').forEach(fn); }
+  }
+  observeFill('.score-grid', function (el) { if (el.hasAttribute('data-pct')) fillRing(el); });
+  observeFill('.lead-card', function (el) { if (el.hasAttribute('data-w')) fillBar(el); });
+
+  /* calm radar */
+  var canvas = document.getElementById('radar');
+  if (canvas && canvas.getContext) {
+    var cs = getComputedStyle(document.documentElement);
+    function v(n) { return cs.getPropertyValue(n).trim(); }
+    var C_ACCENT = v('--accent') || '#0e9e86', C_WARM = v('--warm') || '#e8a13a', C_HOT = v('--hot') || '#e2603b', C_LINE = v('--line') || '#dde5e4';
+    var ctx = canvas.getContext('2d');
+    var DPR = Math.min(window.devicePixelRatio || 1, 2), size = 360;
+    canvas.width = size * DPR; canvas.height = size * DPR; ctx.scale(DPR, DPR);
+    var cx = size / 2, cy = size / 2, R = size / 2 - 10;
+    var seed = 91;
+    function rnd() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
+    var blips = [];
+    for (var i = 0; i < 22; i++) {
+      var roll = rnd();
+      var type = roll > 0.86 ? 'hot' : (roll > 0.66 ? 'warm' : 'fit');
+      blips.push({ ang: rnd() * Math.PI * 2, rad: Math.sqrt(rnd()) * (R - 16) + 8, type: type, phase: rnd() * Math.PI * 2 });
+    }
+    var COL = { fit: C_ACCENT, warm: C_WARM, hot: C_HOT };
+    var sweep = -Math.PI / 2;
+    function draw(ts) {
+      ctx.clearRect(0, 0, size, size);
+      ctx.strokeStyle = C_LINE; ctx.lineWidth = 1;
+      for (var r = 1; r <= 3; r++) { ctx.beginPath(); ctx.arc(cx, cy, R * r / 3, 0, Math.PI * 2); ctx.stroke(); }
+      ctx.globalAlpha = 0.6;
+      ctx.beginPath(); ctx.moveTo(cx - R, cy); ctx.lineTo(cx + R, cy); ctx.moveTo(cx, cy - R); ctx.lineTo(cx, cy + R); ctx.stroke();
+      ctx.globalAlpha = 1;
+      if (!reduce) {
+        ctx.save(); ctx.translate(cx, cy); ctx.rotate(sweep);
+        var g = ctx.createLinearGradient(0, 0, R, 0);
+        g.addColorStop(0, hexA(C_ACCENT, 0.18)); g.addColorStop(1, hexA(C_ACCENT, 0));
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, R, -0.5, 0); ctx.closePath(); ctx.fillStyle = g; ctx.fill();
+        ctx.restore();
+      }
+      var now = ts || 0;
+      blips.forEach(function (b) {
+        var x = cx + Math.cos(b.ang) * b.rad, y = cy + Math.sin(b.ang) * b.rad;
+        var pulse = reduce ? 0 : (Math.sin(now / 900 + b.phase) * 0.5 + 0.5);
+        if (b.type !== 'fit') { ctx.globalAlpha = 0.14 + pulse * 0.16; ctx.beginPath(); ctx.arc(x, y, 5 + pulse * 2.5, 0, Math.PI * 2); ctx.fillStyle = COL[b.type]; ctx.fill(); ctx.globalAlpha = 1; }
+        ctx.beginPath(); ctx.arc(x, y, b.type === 'fit' ? 2 : 2.6, 0, Math.PI * 2); ctx.fillStyle = COL[b.type]; ctx.fill();
+      });
+      ctx.beginPath(); ctx.arc(cx, cy, 3.2, 0, Math.PI * 2); ctx.fillStyle = C_ACCENT; ctx.fill();
+      if (!reduce) { sweep += 0.008; requestAnimationFrame(draw); }
+    }
+    function hexA(hex, a) {
+      hex = hex.replace('#', ''); if (hex.length === 3) hex = hex.split('').map(function (c) { return c + c; }).join('');
+      var n = parseInt(hex, 16); return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+    }
+    if (reduce) draw(0); else requestAnimationFrame(draw);
+  }
+})();
+</script>
+
+</body>
+</html>
