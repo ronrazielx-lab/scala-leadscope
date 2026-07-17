@@ -106,15 +106,16 @@
   .tag { font-size: .78rem; font-weight: 550; padding: 6px 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: var(--ink-soft); }
   .tag b { color: var(--ink); font-weight: 650; }
 
-  /* calm radar */
-  .radar-panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow-lg); }
-  .radar-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-faint); font-weight: 650; }
-  .radar-head b { color: var(--accent); font-family: var(--mono); font-weight: 600; letter-spacing: .02em; }
-  .radar-box { position: relative; aspect-ratio: 1/1; width: 100%; max-width: 340px; margin: 8px auto 0; }
-  canvas#radar { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .radar-legend { display: flex; justify-content: center; gap: 16px; margin-top: 12px; font-size: .7rem; color: var(--ink-faint); flex-wrap: wrap; }
-  .radar-legend span { display: inline-flex; align-items: center; gap: 6px; }
-  .radar-legend i { width: 8px; height: 8px; border-radius: 50%; }
+  /* hero flow box */
+  .hero-viz { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow-lg); }
+  .viz-label { font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-faint); font-weight: 650; }
+  .viz-flow { display: flex; align-items: center; gap: 10px; margin: 16px 0 4px; }
+  .viz-node { flex: 1; text-align: center; padding: 12px 6px; border-radius: 10px; background: var(--surface-2); font-size: .74rem; font-weight: 600; color: var(--ink-soft); border: 1px solid var(--line); }
+  .viz-node.out { background: var(--accent); color: #fff; border-color: transparent; }
+  :root[data-theme="dark"] .viz-node.out { color: #05100e; }
+  @media (prefers-color-scheme: dark) { .viz-node.out { color: #05100e; } }
+  .viz-arrow { color: var(--accent); font-weight: 700; flex: none; }
+  .viz-caption { font-size: .82rem; color: var(--ink-faint); margin-top: 14px; }
 
   /* ---------- insight band ---------- */
   .insight { background: var(--ink); color: #eaf3f1; border-radius: var(--radius); padding: 40px; box-shadow: var(--shadow-lg); }
@@ -271,14 +272,16 @@
         <span class="tag">Warm paths <b>before</b> cold outreach</span>
       </div>
     </div>
-    <div class="radar-panel reveal">
-      <div class="radar-head"><span>Live buyer radar</span><b>watching · 2,847</b></div>
-      <div class="radar-box"><canvas id="radar" width="360" height="360"></canvas></div>
-      <div class="radar-legend">
-        <span><i style="background:var(--accent)"></i> ICP match</span>
-        <span><i style="background:var(--warm)"></i> Intent</span>
-        <span><i style="background:var(--hot)"></i> Warm path</span>
+    <div class="hero-viz reveal">
+      <div class="viz-label">The one-line story</div>
+      <div class="viz-flow">
+        <div class="viz-node">LinkedIn<br>signals</div>
+        <div class="viz-arrow">→</div>
+        <div class="viz-node">Score &amp;<br>explain</div>
+        <div class="viz-arrow">→</div>
+        <div class="viz-node out">Ready-to-<br>contact leads</div>
       </div>
+      <p class="viz-caption">Competitor engagement, hiring signals, job changes and published science become a prioritized queue your team works top-down — highest fit &amp; intent first.</p>
     </div>
   </div>
 </div>
