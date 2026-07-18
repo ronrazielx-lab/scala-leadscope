@@ -202,6 +202,31 @@ select.stage-select { flex: 1; border: 1px solid var(--line); background: var(--
 .crm-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .crm-note { font-size: 0.78rem; color: var(--ink-faint); }
 @media (max-width: 900px) { .charts-grid { grid-template-columns: 1fr; } }
+/* market signals feed */
+.mkt-intro { color: var(--ink-soft); font-size: 0.92rem; margin: 18px 0 0; max-width: 74ch; }
+.feed-list { display: flex; flex-direction: column; gap: 12px; margin: 22px 0 44px; }
+.sig-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px; }
+.sig-card.rejected { opacity: 0.7; }
+.sig-top { display: flex; align-items: center; gap: 10px; margin-bottom: 13px; flex-wrap: wrap; }
+.sig-src { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 700; color: var(--accent-deep); background: var(--accent-wash); border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent); padding: 3px 9px; border-radius: 999px; }
+@media (prefers-color-scheme: dark) { .sig-src { color: var(--accent); } }
+.sig-when { font-family: var(--mono); font-size: 0.72rem; color: var(--ink-faint); }
+.sig-verdict { margin-left: auto; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; }
+.sig-verdict.rel { color: var(--accent-deep); background: var(--accent-wash); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); }
+@media (prefers-color-scheme: dark) { .sig-verdict.rel { color: var(--accent); } }
+.sig-verdict.noise { color: var(--ink-faint); background: var(--surface-2); border: 1px solid var(--line); }
+.sig-block { display: grid; grid-template-columns: 68px 1fr; gap: 10px 12px; align-items: start; }
+.sig-k { font-size: 0.6rem; letter-spacing: 0.09em; text-transform: uppercase; font-weight: 700; color: var(--ink-faint); padding-top: 3px; }
+.sig-post-txt { font-size: 0.9rem; color: var(--ink); }
+.sig-meta { font-size: 0.78rem; color: var(--ink-faint); margin-top: 3px; }
+.sig-who { font-size: 0.86rem; color: var(--ink); } .sig-who b { font-weight: 650; }
+.sig-comment { font-size: 0.9rem; color: var(--ink-soft); font-style: italic; border-left: 3px solid var(--warm); padding: 3px 0 3px 12px; margin-top: 6px; }
+.sig-divider { height: 1px; background: var(--line); margin: 13px 0; }
+.sig-extract { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 0.82rem; }
+.sig-tag { font-family: var(--mono); font-size: 0.68rem; font-weight: 600; color: var(--warm); background: color-mix(in srgb, var(--warm) 12%, transparent); border: 1px solid color-mix(in srgb, var(--warm) 30%, transparent); padding: 2px 8px; border-radius: 6px; }
+.sig-arrow { color: var(--ink-faint); }
+.sig-outcome { color: var(--ink-soft); } .sig-outcome b { color: var(--accent); font-weight: 650; }
+.sig-outcome.rej b { color: var(--ink-faint); }
 .empty { text-align: center; padding: 80px 20px; color: var(--ink-faint); }
 .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 70; background: var(--ink); color: var(--bg); padding: 11px 18px; border-radius: 10px; font-size: 0.85rem; font-weight: 550; box-shadow: var(--shadow-lg); }
 @media (prefers-color-scheme: dark) { .toast { background: var(--accent); color: #05100e; } }
@@ -309,6 +334,63 @@ const SCAN_POOL = [
 ];
 let scanCursor = 0;
 
+/* ---------- market signals (rich feed for the Signals tab; demo data) ---------- */
+const MARKET_SIGNALS = [
+  { d: 0.3, competitor: "Cradle", topic: "Antibody developability prediction", author: "Elior Vance", authorTitle: "Founding Scientist @ Cradle", excerpt: "New benchmark: our developability model cut wet-lab cycles ~40% across 12 antibody programs. Full thread on the failure modes it catches early 👇", type: "comment",
+    who: "Dr. Marcus Chen", whoHeadline: "Structural Biology Lead @ Helix Therapeutics", comment: "This matches what we're seeing internally — expression liabilities are our #1 bottleneck. How are you handling aggregation-prone sequences?", kind: "competitor_engagement", strength: 88, relevant: true, outcome: "Updated lead: Dr. Marcus Chen" },
+  { d: 0.9, competitor: "Absci", topic: "Generative antibody design", author: "Priya Deshpande", authorTitle: "Director of ML @ Absci", excerpt: "We generated and validated de-novo binders against a tough target in one cycle. Here's how the wet-lab-in-the-loop setup works.", type: "comment",
+    who: "Dr. Priya Nair", whoHeadline: "Director, Antibody Engineering @ Kestrel Biologics", comment: "Impressive throughput. Curious how you're validating developability before committing to synthesis at scale?", kind: "competitor_engagement", strength: 82, relevant: true, outcome: "New lead: Dr. Priya Nair" },
+  { d: 1.4, competitor: "LabGenius", topic: "ML-guided protein optimization", author: "Tom Fielding", authorTitle: "Head of Platform @ LabGenius", excerpt: "Directed evolution vs ML-guided design — our data on where each wins for stability engineering.", type: "comment",
+    who: "Dr. Hannah Weiss", whoHeadline: "Principal Scientist, Protein Engineering @ Meridian Bio", comment: "We're evaluating exactly this tradeoff for a stability campaign right now. Would love to compare notes offline.", kind: "competitor_engagement", strength: 80, relevant: true, outcome: "New lead: Dr. Hannah Weiss" },
+  { d: 1.6, competitor: "Cradle", topic: "Antibody developability prediction", author: "Elior Vance", authorTitle: "Founding Scientist @ Cradle", excerpt: "New benchmark: our developability model cut wet-lab cycles ~40% across 12 antibody programs.", type: "reaction",
+    who: "Jordan Blake", whoHeadline: "Technical Recruiter @ TalentBridge · hiring in biotech", comment: null, kind: "competitor_engagement", strength: 20, relevant: false, outcome: "Filtered — recruiter, not an ICP buyer" },
+  { d: 2.2, competitor: "Generate:Biomedicines", topic: "Generative protein therapeutics", author: "Dana Frost", authorTitle: "VP Communications @ Generate:Biomedicines", excerpt: "Announcing our latest program advancing to the clinic — generative design end-to-end.", type: "comment",
+    who: "Dr. Sofia Patel", whoHeadline: "Chief Scientific Officer @ Cassin Pharma", comment: "Congratulations — generative approaches to protein therapeutics are clearly maturing fast.", kind: "competitor_engagement", strength: 70, relevant: true, outcome: "Updated lead: Dr. Sofia Patel" },
+  { d: 3.1, competitor: "Arzeda", topic: "Computational enzyme design", author: "Marco Reyes", authorTitle: "Enzyme Platform Lead @ Arzeda", excerpt: "Designing enzymes for a new biocatalysis route — cut months off process development. Details in the post.", type: "comment",
+    who: "Dr. Ingrid Vos", whoHeadline: "Head of Enzyme Engineering @ Enzary Industrial", comment: "Route selection is exactly where we lose the most time. Any data on activity retention after scale-up?", kind: "competitor_engagement", strength: 66, relevant: true, outcome: "Matched lead: Dr. Ingrid Vos" },
+  { d: 3.4, competitor: "Absci", topic: "Generative antibody design", author: "Priya Deshpande", authorTitle: "Director of ML @ Absci", excerpt: "We generated and validated de-novo binders against a tough target in one cycle.", type: "reaction",
+    who: "Sam Rivera", whoHeadline: "PhD student, molecular biology · seeking 2026 internships", comment: null, kind: "competitor_engagement", strength: 18, relevant: false, outcome: "Filtered — student, not a buyer" },
+  { d: 4.0, competitor: "BigHat Biosciences", topic: "Wet-lab-in-the-loop antibody engineering", author: "Karen Liu", authorTitle: "Head of Discovery @ BigHat Biosciences", excerpt: "Closing the loop between ML and the bench weekly — throughput numbers inside.", type: "comment",
+    who: "Dr. Yuki Tanaka", whoHeadline: "VP, Biologics Discovery @ Meridian Bio", comment: "Wet-lab-in-the-loop is the right call. What per-week throughput are you actually sustaining?", kind: "competitor_engagement", strength: 74, relevant: true, outcome: "New lead: Dr. Yuki Tanaka" },
+  { d: 5.2, competitor: "Job market", topic: "Hiring signal", author: "Kestrel Biologics", authorTitle: "Careers page", excerpt: "Open role: Senior Computational Protein Designer — build ML models for antibody optimization.", type: "job",
+    who: "Kestrel Biologics", whoHeadline: "Antibody biotech · San Francisco, CA", comment: null, kind: "hiring", strength: 72, relevant: true, outcome: "Hiring signal → account flagged: Kestrel Biologics" },
+  { d: 6.5, competitor: "Cradle", topic: "Structure prediction for hard targets", author: "Nils Aaberg", authorTitle: "Research Lead @ Cradle", excerpt: "Predicting structures for membrane and multi-domain proteins — where current tools still break.", type: "comment",
+    who: "Alex Turner", whoHeadline: "Marketing Manager, Life Sciences SaaS", comment: "Great content, really informative!", kind: "competitor_engagement", strength: 15, relevant: false, outcome: "Filtered — marketing role, not a buyer" },
+];
+
+function timeAgoDays(d) { if (d < 1) return Math.max(1, Math.round(d * 24)) + "h ago"; const n = Math.round(d); return n === 1 ? "1d ago" : n + "d ago"; }
+function signalCard(s) {
+  const whoLine = s.type === "job"
+    ? `<div class="sig-who"><b>${esc(s.who)}</b> — ${esc(s.whoHeadline)}</div>`
+    : `<div class="sig-who"><b>${esc(s.who)}</b> — ${esc(s.whoHeadline)}</div>${s.comment ? `<div class="sig-comment">"${esc(s.comment)}"</div>` : `<div class="sig-meta">reacted to the post</div>`}`;
+  const engLabel = s.type === "job" ? "Role" : s.type === "reaction" ? "Reacted" : "Comment";
+  return `<div class="sig-card ${s.relevant ? "" : "rejected"}">
+    <div class="sig-top"><span class="sig-src">${esc(s.competitor)}</span><span class="sig-when">${timeAgoDays(s.d)}</span><span class="sig-verdict ${s.relevant ? "rel" : "noise"}">${s.relevant ? "✓ ICP-relevant" : "✕ Filtered — noise"}</span></div>
+    <div class="sig-block">
+      <span class="sig-k">${s.type === "job" ? "Source" : "Post"}</span>
+      <div><div class="sig-post-txt">"${esc(s.excerpt)}"</div><div class="sig-meta">${esc(s.topic)} · ${s.type === "job" ? "" : "posted by "}${esc(s.author)}${s.authorTitle ? ", " + esc(s.authorTitle) : ""}</div></div>
+      <span class="sig-k">${engLabel}</span>
+      <div>${whoLine}</div>
+    </div>
+    <div class="sig-divider"></div>
+    <div class="sig-extract"><span class="sig-tag">${SIGNAL_LABELS[s.kind] || s.kind} · strength ${s.strength}</span><span class="sig-arrow">→</span><span class="sig-outcome ${s.relevant ? "" : "rej"}"><b>${esc(s.outcome)}</b></span></div>
+  </div>`;
+}
+function renderSignals() {
+  const S = MARKET_SIGNALS;
+  const rel = S.filter((s) => s.relevant).length;
+  const comps = new Set(S.filter((s) => s.competitor !== "Job market").map((s) => s.competitor)).size;
+  const newL = S.filter((s) => /^New lead/.test(s.outcome)).length;
+  return `<div class="stats">
+    <div class="stat"><div class="n">${S.length}</div><div class="l">Signals detected</div></div>
+    <div class="stat"><div class="n">${Math.round((rel / S.length) * 100)}%</div><div class="l">ICP-relevant</div></div>
+    <div class="stat warm"><div class="n">${comps}</div><div class="l">Competitors tracked</div></div>
+    <div class="stat meet"><div class="n">${newL}</div><div class="l">New leads surfaced</div></div>
+  </div>
+  <p class="mkt-intro">Everything the system saw in the market — the original post and who wrote it, who engaged and exactly what they said, and the call it made. Fully transparent, so you can judge signal quality and tune what we track.</p>
+  <div class="feed-list">${S.map(signalCard).join("")}</div>`;
+}
+
 /* ---------- heuristic triage (ported from classify.ts) ---------- */
 const NOISE = /(recruit|talent|student|intern|marketing|sales|account exec|investor relations)/i;
 const TECH2 = /(protein eng|antibody eng|enzyme eng|structural bio|biologics discovery|protein science|principal scientist)/i;
@@ -413,17 +495,21 @@ function renderDrawer() {
 }
 function render() {
   const drawerScroll = document.querySelector(".drawer")?.scrollTop;
-  const head = state.view === "analytics"
-    ? `<div class="eyebrow">Analytics</div><h1>How the pipeline is performing.</h1><p>Funnel, signal effectiveness and volume — plus CRM export.</p>`
-    : `<div class="eyebrow">Ranked pipeline</div><h1>Your best next conversations, first.</h1><p>Every lead scored on fit, intent and warmth — with the reason attached.</p>`;
+  const heads = {
+    analytics: `<div class="eyebrow">Analytics</div><h1>How the pipeline is performing.</h1><p>Funnel, signal effectiveness and volume — plus CRM export.</p>`,
+    signals: `<div class="eyebrow">Market signals</div><h1>What's moving in the market.</h1><p>Live intelligence from competitor posts, hiring and funding — with the reasoning shown for every call.</p>`,
+    pipeline: `<div class="eyebrow">Ranked pipeline</div><h1>Your best next conversations, first.</h1><p>Every lead scored on fit, intent and warmth — with the reason attached.</p>`,
+  };
+  const head = heads[state.view] || heads.pipeline;
   let main = "";
   if (state.view === "analytics") main = renderAnalytics();
+  else if (state.view === "signals") main = renderSignals();
   else main = renderStats() + (state.view === "pipeline" ? renderPipeline() : renderBoard());
   document.getElementById("root").innerHTML = `<div class="app">
     <header class="topbar"><div class="wrap topbar-inner">
       <div class="brand"><div class="mark"></div><div class="brand-name">Scala Biodesign · <b>LeadScope</b></div></div>
       <div class="topbar-spacer"></div>
-      <div class="seg"><button data-view="pipeline" class="${state.view === "pipeline" ? "active" : ""}">Pipeline</button><button data-view="board" class="${state.view === "board" ? "active" : ""}">Board</button><button data-view="analytics" class="${state.view === "analytics" ? "active" : ""}">Analytics</button></div>
+      <div class="seg"><button data-view="pipeline" class="${state.view === "pipeline" ? "active" : ""}">Pipeline</button><button data-view="signals" class="${state.view === "signals" ? "active" : ""}">Signals</button><button data-view="board" class="${state.view === "board" ? "active" : ""}">Board</button><button data-view="analytics" class="${state.view === "analytics" ? "active" : ""}">Analytics</button></div>
       <button class="btn" data-act="scan">⟳ Run signal scan</button>
     </div></header>
     <main class="wrap"><div class="pagehead">${head}</div>${main}</main>
@@ -443,17 +529,37 @@ function copyText(t) { navigator.clipboard && navigator.clipboard.writeText(t); 
 function setStage(l, stage) { l.stage = stage; render(); toast("Moved to " + STAGE_LABELS[stage]); }
 function draftNext(l) { const used = new Set(l.messages.map((m) => m.step)); const next = SEQUENCE.find((s) => !used.has(s.step)); if (!next) return; l.messages.push({ id: uid("msg"), channel: next.channel, step: next.step, body: composeBody(next.step, l), status: "draft" }); render(); toast("Drafted next step"); }
 function markMsg(l, mid, status) { const m = l.messages.find((x) => x.id === mid); if (!m) return; m.status = status; if (status === "sent" && (l.stage === "new" || l.stage === "qualified")) l.stage = "contacted"; if (status === "replied" && l.stage !== "meeting") l.stage = "replied"; render(); toast(status === "sent" ? "Marked sent · stage → Contacted" : "Marked replied · stage → Replied"); }
+function competitorFromSource(src) {
+  if (/Cradle/i.test(src)) return "Cradle";
+  if (/Absci/i.test(src)) return "Absci";
+  if (/LabGenius/i.test(src)) return "LabGenius";
+  if (/careers/i.test(src)) return "Job market";
+  if (/press/i.test(src)) return "Newswire";
+  return "LinkedIn";
+}
 function runScan() {
   const picked = []; for (let i = 0; i < 4; i++) picked.push(SCAN_POOL[(scanCursor + i) % SCAN_POOL.length]); scanCursor = (scanCursor + 4) % SCAN_POOL.length;
   let newLeads = 0, added = 0, relevant = 0;
+  const fresh = [];
   for (const e of picked) {
-    const isBuyer = !NOISE.test(e.headline) && (TECH2.test(e.headline) || ECON2.test(e.headline)); if (!isBuyer) continue; relevant++;
-    let lead = state.leads.find((l) => l.fullName === e.name);
-    if (!lead) { const account = Object.assign({ name: e.company, segment: "Discovered via signal" }, inferFirmographics(e.headline + " " + e.company)); lead = { id: uid("lead"), fullName: e.name, title: e.headline.split(/[|@]/)[0].trim(), role: e.headline.split(/[|@]/)[0].trim(), seniority: seniorityOf(e.headline), location: null, linkedinUrl: "https://www.linkedin.com/in/example", account, stage: "new", warmPath: null, aiGenerated: false, signals: [], messages: [] }; state.leads.push(lead); newLeads++; }
-    if (!lead.signals.some((s) => s.summary === e.context)) { lead.signals.unshift({ id: uid("sig"), kind: e.kind, strength: STRENGTH_BY_KIND[e.kind] || 55, summary: e.context, source: e.source, occurredAt: daysAgo(0) }); added++; }
-    rescore(lead);
+    const isBuyer = !NOISE.test(e.headline) && (TECH2.test(e.headline) || ECON2.test(e.headline));
+    let outcome, lead;
+    if (isBuyer) {
+      relevant++;
+      lead = state.leads.find((l) => l.fullName === e.name);
+      if (!lead) { const account = Object.assign({ name: e.company, segment: "Discovered via signal" }, inferFirmographics(e.headline + " " + e.company)); lead = { id: uid("lead"), fullName: e.name, title: e.headline.split(/[|@]/)[0].trim(), role: e.headline.split(/[|@]/)[0].trim(), seniority: seniorityOf(e.headline), location: null, linkedinUrl: "https://www.linkedin.com/in/example", account, stage: "new", warmPath: null, aiGenerated: false, signals: [], messages: [] }; state.leads.push(lead); newLeads++; outcome = "New lead: " + e.name; }
+      else outcome = "Updated lead: " + e.name;
+      if (!lead.signals.some((s) => s.summary === e.context)) { lead.signals.unshift({ id: uid("sig"), kind: e.kind, strength: STRENGTH_BY_KIND[e.kind] || 55, summary: e.context, source: e.source, occurredAt: daysAgo(0) }); added++; }
+      rescore(lead);
+    } else {
+      outcome = "Filtered — not an ICP buyer";
+    }
+    const comp = competitorFromSource(e.source);
+    fresh.push({ d: 0.02, competitor: comp, topic: SIGNAL_LABELS[e.kind] || e.kind, author: comp, authorTitle: e.source, excerpt: e.context, type: e.kind === "hiring" ? "job" : "comment", who: e.name, whoHeadline: e.headline, comment: isBuyer && e.kind !== "hiring" ? "(engaged — profile matched against the ICP)" : null, kind: e.kind, strength: STRENGTH_BY_KIND[e.kind] || 55, relevant: isBuyer, outcome });
   }
-  render(); toast(`Scan: ${relevant}/4 relevant · +${newLeads} leads, ${added} signals · heuristic triage`);
+  MARKET_SIGNALS.unshift(...fresh);
+  state.view = "signals";
+  render(); toast(`Scan: ${relevant}/4 relevant · +${newLeads} leads, ${added} signals · surfaced in the Signals feed`);
 }
 function exportCsv() {
   const cell = (v) => { const s = v == null ? "" : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
