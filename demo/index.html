@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scala Biodesign · LeadScope — Demo</title>
+<meta name="description" content="Interactive demo of the LeadScope sales-intelligence pipeline — ranked leads, signal scan, assisted outreach, and analytics. Runs entirely in your browser.">
+<meta name="theme-color" content="#0e9e86">
+<meta property="og:title" content="Scala Biodesign · LeadScope — Interactive demo">
+<meta property="og:description" content="A ranked pipeline of protein-engineering buyers: scored, explained, and ready to contact. Click around — it's live.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧬</text></svg>">
+<style>
+/* LeadScope dashboard — design system (V3 identity: calm, light, bio-teal). */
+:root {
+  --bg: #f6f8f9; --surface: #ffffff; --surface-2: #eef2f3;
+  --ink: #10201f; --ink-soft: #3f5250; --ink-faint: #6b7f7c; --line: #dde5e4;
+  --accent: #0e9e86; --accent-deep: #0b6f5f; --accent-wash: #e2f2ee;
+  --cold: #6b8fb0; --warm: #e8a13a; --hot: #e2603b; --good: #0e9e86;
+  --shadow: 0 1px 2px rgba(16, 32, 31, 0.05), 0 8px 28px rgba(16, 32, 31, 0.06);
+  --shadow-lg: 0 2px 6px rgba(16, 32, 31, 0.08), 0 20px 60px rgba(16, 32, 31, 0.12);
+  --ring-track: #e6ecec;
+  --mono: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+  --display: "Inter Tight", "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --radius: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b1413; --surface: #101d1b; --surface-2: #162624;
+    --ink: #e8f0ee; --ink-soft: #a9bcb8; --ink-faint: #7b918d; --line: #22322f;
+    --accent: #2bc9ac; --accent-deep: #7ee6d0; --accent-wash: #14312b;
+    --cold: #7ba2c4; --warm: #f0b25a; --hot: #f07a56; --good: #2bc9ac;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 28px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 20px 60px rgba(0, 0, 0, 0.5);
+    --ring-track: #22322f;
+  }
+}
+* { box-sizing: border-box; }
+html, body { padding: 0; margin: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); line-height: 1.55; -webkit-font-smoothing: antialiased; }
+button { font-family: inherit; cursor: pointer; }
+a { color: inherit; }
+.app { min-height: 100vh; }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 0 24px; }
+.topbar { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.topbar-inner { display: flex; align-items: center; gap: 14px; padding: 14px 0; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 11px; }
+.mark { width: 30px; height: 30px; border-radius: 8px; flex: none; position: relative; background: linear-gradient(135deg, var(--accent), var(--accent-deep)); }
+.mark::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 30% 32%, rgba(255,255,255,0.85) 0 2px, transparent 2.5px), radial-gradient(circle at 68% 66%, rgba(255,255,255,0.85) 0 2px, transparent 2.5px), linear-gradient(120deg, transparent 44%, rgba(255,255,255,0.55) 45% 47%, transparent 48%); }
+.brand-name { font-family: var(--display); font-weight: 640; font-size: 1rem; letter-spacing: -0.01em; }
+.brand-name b { color: var(--accent); font-weight: 750; }
+.topbar-spacer { flex: 1; }
+.seg { display: inline-flex; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
+.seg button { border: none; background: transparent; color: var(--ink-faint); font-size: 0.82rem; font-weight: 600; padding: 7px 14px; border-radius: 7px; }
+.seg button.active { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+.btn { border: 1px solid var(--line); background: var(--surface); color: var(--ink-soft); font-size: 0.84rem; font-weight: 600; padding: 8px 14px; border-radius: 9px; display: inline-flex; align-items: center; gap: 7px; }
+.btn:hover { border-color: var(--accent); color: var(--ink); }
+.btn.primary { background: var(--accent); color: #fff; border-color: transparent; }
+@media (prefers-color-scheme: dark) { .btn.primary { color: #05100e; } }
+.btn.primary:hover { background: var(--accent-deep); color: #fff; }
+@media (prefers-color-scheme: dark) { .btn.primary:hover { color: #05100e; } }
+.btn:disabled { opacity: 0.55; cursor: default; }
+.budget-chip { font-family: var(--mono); font-size: 0.72rem; font-weight: 600; color: var(--ink-soft); background: var(--surface-2); border: 1px solid var(--line); padding: 6px 11px; border-radius: 999px; white-space: nowrap; }
+.budget-chip .cap { color: var(--ink-faint); font-weight: 400; }
+.pagehead { padding: 30px 0 6px; }
+.eyebrow { font-size: 0.7rem; font-weight: 650; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); }
+.pagehead h1 { font-family: var(--display); font-size: 1.7rem; font-weight: 700; letter-spacing: -0.03em; margin: 8px 0 2px; }
+.pagehead p { color: var(--ink-soft); font-size: 0.96rem; margin: 0; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 24px 0; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); position: relative; overflow: hidden; }
+.stat::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); }
+.stat.hot::before { background: var(--hot); } .stat.warm::before { background: var(--warm); } .stat.meet::before { background: var(--good); }
+.stat .n { font-family: var(--display); font-size: 2rem; font-weight: 730; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.stat .l { color: var(--ink-faint); font-size: 0.82rem; margin-top: 8px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 40px; }
+.tbl-scroll { overflow-x: auto; }
+.tbl { width: 100%; border-collapse: collapse; }
+.tbl thead th { text-align: left; font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); font-weight: 650; padding: 13px 16px; border-bottom: 1px solid var(--line); background: var(--surface-2); white-space: nowrap; }
+.tbl tbody tr { border-bottom: 1px solid var(--line); transition: background 0.12s; }
+.tbl tbody tr:last-child { border-bottom: none; }
+.tbl tbody tr:hover { background: var(--surface-2); cursor: pointer; }
+.tbl td { padding: 13px 16px; vertical-align: middle; }
+.pri { display: flex; align-items: center; gap: 10px; }
+.pri-num { font-family: var(--display); font-weight: 740; font-size: 1.15rem; width: 30px; text-align: right; font-variant-numeric: tabular-nums; }
+.pri-num.t-hot { color: var(--hot); } .pri-num.t-warm { color: var(--warm); } .pri-num.t-cool { color: var(--cold); }
+.pri-bar { width: 52px; height: 6px; border-radius: 3px; background: var(--ring-track); overflow: hidden; }
+.pri-bar > span { display: block; height: 100%; border-radius: 3px; background: var(--accent); }
+.person .nm { font-weight: 620; font-size: 0.92rem; } .person .rl { color: var(--ink-faint); font-size: 0.76rem; }
+.company .cn { font-size: 0.88rem; font-weight: 550; } .company .sg { color: var(--ink-faint); font-size: 0.74rem; }
+.scorecells { display: flex; gap: 12px; }
+.scorecell { text-align: center; min-width: 40px; }
+.scorecell .v { font-family: var(--display); font-weight: 680; font-size: 0.92rem; font-variant-numeric: tabular-nums; }
+.scorecell.f .v { color: var(--accent); } .scorecell.i .v { color: var(--warm); } .scorecell.w .v { color: var(--hot); }
+.scorecell .k { font-size: 0.56rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); }
+.chip { display: inline-flex; align-items: center; gap: 5px; font-size: 0.72rem; font-weight: 600; padding: 4px 9px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); color: var(--ink-soft); white-space: nowrap; }
+.chip.stage-qualified { color: var(--accent-deep); background: var(--accent-wash); border-color: color-mix(in srgb, var(--accent) 30%, transparent); }
+@media (prefers-color-scheme: dark) { .chip.stage-qualified { color: var(--accent); } }
+.chip.stage-contacted { color: var(--cold); border-color: color-mix(in srgb, var(--cold) 35%, transparent); }
+.chip.stage-replied { color: var(--warm); border-color: color-mix(in srgb, var(--warm) 40%, transparent); }
+.chip.stage-meeting { color: var(--hot); background: color-mix(in srgb, var(--hot) 12%, transparent); border-color: color-mix(in srgb, var(--hot) 40%, transparent); }
+.chip.warm { color: var(--hot); background: color-mix(in srgb, var(--hot) 10%, transparent); border-color: color-mix(in srgb, var(--hot) 35%, transparent); }
+.signal-cell { color: var(--ink-soft); font-size: 0.8rem; max-width: 260px; }
+.signal-cell .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 6px; background: var(--warm); }
+.board { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 40px; align-items: start; }
+.kcol { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; min-width: 0; }
+.kcol h3 { font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); font-weight: 650; margin: 2px 2px 10px; display: flex; justify-content: space-between; }
+.kcol h3 span { color: var(--accent); }
+.kcard { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-bottom: 9px; box-shadow: var(--shadow); }
+.kcard:hover { border-color: var(--accent); cursor: pointer; }
+.kcard .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.kcard .nm { font-weight: 620; font-size: 0.85rem; } .kcard .p { font-family: var(--display); font-weight: 730; font-size: 0.95rem; font-variant-numeric: tabular-nums; }
+.kcard .rl { color: var(--ink-faint); font-size: 0.72rem; margin-top: 2px; } .kcard .co { color: var(--ink-soft); font-size: 0.72rem; margin-top: 6px; }
+.kcard .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-left: 6px; vertical-align: middle; }
+.dot.t-hot { background: var(--hot); } .dot.t-warm { background: var(--warm); } .dot.t-cool { background: var(--cold); }
+.scrim { position: fixed; inset: 0; background: rgba(8, 16, 15, 0.42); z-index: 40; animation: fade 0.18s ease; }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(520px, 94vw); z-index: 50; background: var(--surface); border-left: 1px solid var(--line); box-shadow: var(--shadow-lg); overflow-y: auto; animation: slidein 0.22s cubic-bezier(0.2, 0.7, 0.2, 1); }
+@keyframes slidein { from { transform: translateX(30px); opacity: 0.4; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .drawer, .scrim { animation: none; } }
+.drawer-in { padding: 24px 26px 40px; position: relative; }
+.dz-close { position: absolute; top: 16px; right: 18px; border: none; background: var(--surface-2); color: var(--ink-soft); width: 30px; height: 30px; border-radius: 8px; font-size: 1rem; }
+.dz-close:hover { color: var(--ink); }
+.dz-top { display: flex; align-items: center; gap: 15px; padding-right: 34px; }
+.dz-av { width: 54px; height: 54px; border-radius: 14px; flex: none; background: linear-gradient(135deg, var(--accent), var(--accent-deep)); color: #fff; display: grid; place-items: center; font-family: var(--display); font-weight: 740; font-size: 1.1rem; }
+@media (prefers-color-scheme: dark) { .dz-av { color: #05100e; } }
+.dz-name { font-family: var(--display); font-weight: 690; font-size: 1.18rem; letter-spacing: -0.01em; }
+.dz-role { color: var(--ink-faint); font-size: 0.82rem; }
+.dz-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+.gauges { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 22px 0; }
+.gauge { text-align: center; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 14px 8px; }
+.ring-box { position: relative; width: 84px; height: 84px; margin: 0 auto 8px; }
+.ring-box svg { transform: rotate(-90deg); display: block; }
+.ring-bg { stroke: var(--ring-track); }
+.ring-val { stroke-linecap: round; transition: stroke-dashoffset 1s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.ring-num { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--display); font-weight: 730; font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+.gauge.f .ring-val { stroke: var(--accent); } .gauge.f .k { color: var(--accent); }
+.gauge.i .ring-val { stroke: var(--warm); } .gauge.i .k { color: var(--warm); }
+.gauge.w .ring-val { stroke: var(--hot); } .gauge.w .k { color: var(--hot); }
+.gauge .k { font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; }
+.dz-section { margin-top: 22px; }
+.dz-section h4 { font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-faint); font-weight: 650; margin: 0 0 10px; display: flex; align-items: center; }
+.why { background: var(--surface-2); border-left: 3px solid var(--accent); border-radius: 0 10px 10px 0; padding: 13px 15px; font-size: 0.88rem; color: var(--ink-soft); }
+.ai-tag { display: inline-flex; align-items: center; gap: 5px; font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 650; color: var(--accent); margin-left: 8px; }
+.factors { list-style: none; margin: 0; padding: 0; }
+.factors li { display: flex; justify-content: space-between; gap: 10px; font-size: 0.82rem; padding: 6px 0; border-bottom: 1px dashed var(--line); color: var(--ink-soft); }
+.factors li:last-child { border-bottom: none; }
+.factors .pts { font-family: var(--mono); font-size: 0.76rem; color: var(--accent); font-weight: 600; flex: none; }
+.signals { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.signals li { background: var(--surface-2); border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; }
+.signals .sig-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.signals .sig-kind { font-size: 0.64rem; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 650; color: var(--ink-faint); }
+.signals .sig-when { font-size: 0.7rem; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+.signals .sig-txt { font-size: 0.84rem; color: var(--ink-soft); margin-top: 3px; }
+.draft { border: 1px dashed var(--line); border-radius: 10px; padding: 13px 15px; font-size: 0.86rem; color: var(--ink-soft); font-style: italic; white-space: pre-wrap; }
+.dz-actions { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+.seq-count { margin-left: auto; font-family: var(--mono); font-size: 0.68rem; color: var(--ink-faint); letter-spacing: 0.04em; text-transform: none; }
+.assist-note { font-size: 0.78rem; color: var(--ink-faint); margin: 0 0 12px; }
+.msgs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.msg { background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 12px 13px; }
+.msg.status-sent { border-left: 3px solid var(--cold); } .msg.status-replied { border-left: 3px solid var(--hot); } .msg.status-draft { border-left: 3px solid var(--accent); }
+.msg-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+.msg-step { font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 650; color: var(--ink-faint); }
+.msg-status { font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+.msg-status.s-draft { color: var(--accent-deep); background: var(--accent-wash); } .msg-status.s-sent { color: var(--cold); background: color-mix(in srgb, var(--cold) 14%, transparent); } .msg-status.s-replied { color: var(--hot); background: color-mix(in srgb, var(--hot) 14%, transparent); }
+.msg-body { font-size: 0.85rem; color: var(--ink-soft); white-space: pre-wrap; }
+.msg-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+.msg-actions .btn { padding: 6px 11px; font-size: 0.78rem; }
+.replied-badge { font-size: 0.78rem; font-weight: 650; color: var(--hot); }
+.stage-row { display: flex; align-items: center; gap: 10px; margin-top: 22px; }
+.stage-row label { font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-faint); font-weight: 650; }
+select.stage-select { flex: 1; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 9px; padding: 9px 12px; font-size: 0.86rem; font-weight: 600; }
+.analytics { margin-bottom: 44px; }
+.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px; }
+.chart-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); }
+.chart-card.wide { grid-column: 1 / -1; }
+.chart-card h3 { font-family: var(--display); font-size: 1.02rem; font-weight: 680; letter-spacing: -0.01em; margin: 0; display: flex; align-items: center; gap: 9px; }
+.chart-sub { color: var(--ink-faint); font-size: 0.82rem; margin: 4px 0 18px; }
+.chart-foot { color: var(--ink-faint); font-size: 0.74rem; margin-top: 14px; }
+.demo-pill { font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; color: var(--warm); background: color-mix(in srgb, var(--warm) 14%, transparent); border: 1px solid color-mix(in srgb, var(--warm) 35%, transparent); padding: 2px 7px; border-radius: 999px; }
+.funnel { display: flex; flex-direction: column; gap: 10px; }
+.funnel-row { display: grid; grid-template-columns: 96px 1fr 46px; align-items: center; gap: 12px; }
+.funnel-label { font-size: 0.8rem; color: var(--ink-soft); font-weight: 550; text-align: right; }
+.funnel-track { background: var(--surface-2); border-radius: 6px; height: 30px; overflow: hidden; }
+.funnel-bar { height: 100%; background: linear-gradient(90deg, var(--accent-deep), var(--accent)); border-radius: 6px; display: flex; align-items: center; justify-content: flex-end; padding: 0 10px; min-width: 30px; transition: width 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.funnel-count { color: #fff; font-family: var(--display); font-weight: 700; font-size: 0.86rem; font-variant-numeric: tabular-nums; }
+@media (prefers-color-scheme: dark) { .funnel-count { color: #05100e; } }
+.funnel-conv { font-family: var(--mono); font-size: 0.78rem; color: var(--accent); font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.hbars { display: flex; flex-direction: column; gap: 12px; }
+.hbar-row { display: grid; grid-template-columns: 150px 1fr 40px; align-items: center; gap: 12px; }
+.hbar-label { font-size: 0.8rem; color: var(--ink-soft); font-weight: 550; display: flex; flex-direction: column; }
+.hbar-n { font-size: 0.66rem; color: var(--ink-faint); font-weight: 400; }
+.hbar-track { background: var(--surface-2); border-radius: 5px; height: 12px; overflow: hidden; }
+.hbar-fill { height: 100%; background: var(--accent); border-radius: 5px; transition: width 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.hbar-val { font-family: var(--mono); font-size: 0.8rem; font-weight: 600; color: var(--ink); text-align: right; font-variant-numeric: tabular-nums; }
+.trend { display: flex; align-items: flex-end; gap: 10px; height: 170px; padding-top: 10px; }
+.trend-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; }
+.trend-bar-box { flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; }
+.trend-bar { width: 60%; max-width: 40px; min-height: 3px; background: linear-gradient(180deg, var(--accent), var(--accent-deep)); border-radius: 5px 5px 0 0; position: relative; display: flex; justify-content: center; transition: height 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.trend-val { position: absolute; top: -18px; font-family: var(--mono); font-size: 0.72rem; font-weight: 600; color: var(--ink-soft); }
+.trend-x { font-size: 0.68rem; color: var(--ink-faint); margin-top: 8px; white-space: nowrap; }
+.crm-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.crm-note { font-size: 0.78rem; color: var(--ink-faint); }
+@media (max-width: 900px) { .charts-grid { grid-template-columns: 1fr; } }
+.empty { text-align: center; padding: 80px 20px; color: var(--ink-faint); }
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 70; background: var(--ink); color: var(--bg); padding: 11px 18px; border-radius: 10px; font-size: 0.85rem; font-weight: 550; box-shadow: var(--shadow-lg); }
+@media (prefers-color-scheme: dark) { .toast { background: var(--accent); color: #05100e; } }
+@media (max-width: 1000px) { .stats { grid-template-columns: repeat(2, 1fr); } .board { grid-template-columns: repeat(5, minmax(150px, 1fr)); overflow-x: auto; } .scorecells { gap: 8px; } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div id="toast-root"></div>
+<script>
+"use strict";
+/* ===== LeadScope — client-only demo. All logic ported from the app; no backend. ===== */
+const DAY = 86400000;
+const daysAgo = (n) => new Date(Date.now() - n * DAY).toISOString();
+let _id = 0; const uid = (p) => `${p}_${++_id}`;
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+const STAGES = ["new", "qualified", "contacted", "replied", "meeting"];
+const STAGE_LABELS = { new: "New signals", qualified: "Qualified", contacted: "Contacted", replied: "Replied", meeting: "Meeting" };
+const SIGNAL_LABELS = { competitor_engagement: "Competitor engagement", hiring: "Hiring signal", publication: "Publication", funding: "Funding", job_change: "Job change", content_engagement: "Engaged our content", connection: "Warm connection" };
+const SEQUENCE = [{ step: 1, label: "Opener", channel: "linkedin" }, { step: 2, label: "Follow-up", channel: "linkedin" }, { step: 3, label: "Break-up", channel: "linkedin" }];
+
+/* ---------- scoring (ported from src/lib/scoring.ts) ---------- */
+const clamp = (n, min = 0, max = 100) => Math.max(min, Math.min(max, Math.round(n)));
+const TECH = /(protein eng|antibody eng|enzyme eng|structural bio|biologics discovery|protein science|principal scientist)/i;
+const ECON = /(chief scientific|cso|vp.*r&d|svp.*r&d|head of r&d|r&d platform)/i;
+function computeFit(a, lead) {
+  const f = []; const add = (label, points) => { if (points !== 0) f.push({ label, points }); };
+  if (a.hasBiologicsPipeline) add("Active biologics / antibody pipeline", 25);
+  if (a.hasProteinEngTeam) add("In-house protein-engineering team", 20);
+  if (a.hasStructuralBiology) add("Structural-biology function", 12);
+  const pp = Math.round(Math.min(a.activeProgramsPerYear, 5) / 5 * 13); add(`Runs ~${a.activeProgramsPerYear} protein programs / year`, pp);
+  const b = (a.rdBudgetTier || "").toLowerCase();
+  if (b === "high") add("Enterprise R&D budget", 15); else if (b === "mid") add("Mid R&D budget", 8); else if (b === "low") add("Limited R&D budget", 2);
+  const role = lead.role || ""; const sen = (lead.seniority || "").toLowerCase();
+  if (ECON.test(role) || sen === "csuite") add("Economic buyer (CSO / VP R&D)", 12); else if (TECH.test(role)) add("Technical buyer (eng / bio lead)", 10);
+  if (sen === "vp" || sen === "director" || sen === "lead") add("Decision-making seniority", 3);
+  return { score: clamp(f.reduce((s, x) => s + x.points, 0)), factors: f };
+}
+function recency(iso) { const days = (Date.now() - new Date(iso).getTime()) / DAY; if (days <= 14) return 1; if (days >= 180) return 0.15; return 1 - ((days - 14) / 166) * 0.85; }
+const IW = { competitor_engagement: 1.0, hiring: 0.85, funding: 0.7, publication: 0.6, job_change: 0.6, content_engagement: 0.4, connection: 0 };
+function computeIntent(sigs) { const f = []; let raw = 0; for (const s of sigs) { const w = IW[s.kind] || 0; if (!w) continue; const pts = (s.strength / 100) * w * 45 * recency(s.occurredAt); if (pts < 1) continue; raw += pts; f.push({ label: s.summary, points: Math.round(pts) }); } return { score: clamp(100 * (1 - Math.exp(-raw / 60))), factors: f }; }
+function computeWarmth(sigs, warmPath) { const f = []; const add = (l, p) => p > 0 && f.push({ label: l, points: p }); for (const s of sigs) { const r = recency(s.occurredAt); if (s.kind === "connection") add(s.summary, Math.round(40 * (s.strength / 100))); else if (s.kind === "content_engagement") add(s.summary, Math.round(30 * (s.strength / 100) * r)); } if (warmPath && !f.length) add(warmPath, 25); return { score: clamp(f.reduce((s, x) => s + x.points, 0)), factors: f }; }
+function computePriority(fit, intent, warmth) { const core = (fit / 100) * (0.4 + 0.6 * (intent / 100)); return clamp(core * 82 + (warmth / 100) * 18); }
+function scoreLead(a, lead, sigs) { const fit = computeFit(a, lead), intent = computeIntent(sigs), warmth = computeWarmth(sigs, lead.warmPath); return { fit, intent, warmth, priority: computePriority(fit.score, intent.score, warmth.score) }; }
+
+/* ---------- reasoning fallback (ported) ---------- */
+const firstName = (full) => full.replace(/^(dr\.?|prof\.?)\s+/i, "").split(/\s+/)[0];
+function fallbackReasoning(l) {
+  const fn = firstName(l.fullName); const top = l.signals[0]; const bits = l.factors.fit.slice(0, 2).map((f) => f.label.toLowerCase());
+  const why = [`${l.fullName} at ${l.account.name} scores ${l.fit}/100 on ICP fit`, bits.length ? `(${bits.join(", ")})` : "", top ? `. Recent intent signal: ${top.summary.toLowerCase()}.` : ".", l.warmth >= 40 && l.warmPath ? ` There's a warm path in — ${l.warmPath.toLowerCase()}.` : ""].join(" ").replace(/\s+/g, " ").replace(/\s\./g, ".").trim();
+  const opener = top ? `Hi ${fn} — saw your recent activity around "${top.summary}". We help protein-engineering teams tackle exactly that kind of expression/stability/developability bottleneck; happy to share how a couple of groups approached it if useful.` : `Hi ${fn} — we work with protein-engineering teams at companies like ${l.account.name} on hard expression, stability and developability problems. Would a short exchange be worthwhile?`;
+  return { why, opener };
+}
+function rescore(l) { const s = scoreLead(l.account, l, l.signals); l.fit = s.fit.score; l.intent = s.intent.score; l.warmth = s.warmth.score; l.priority = s.priority; l.factors = { fit: s.fit.factors, intent: s.intent.factors, warmth: s.warmth.factors }; if (!l.aiGenerated) { const r = fallbackReasoning(l); l.why = r.why; l.opener = r.opener; } }
+
+/* ---------- outreach composer (ported) ---------- */
+function composeBody(step, l) { const fn = firstName(l.fullName);
+  if (step === 1) return l.opener || `Hi ${fn} — we help protein-engineering teams tackle hard expression, stability and developability problems. Would a short exchange be useful?`;
+  if (step === 2) return `Hi ${fn} — following up on my note. If protein expression / stability / developability is on the roadmap this quarter, I'd love to show how a couple of teams cut their iteration cycles. Worth a quick look?`;
+  return `Hi ${fn} — I'll close the loop so I'm not cluttering your feed. If the timing is ever right on protein design or optimization, my door's open. Wishing you and the team a strong year.`; }
+
+/* ---------- seed data (mirrors prisma/seed.ts) ---------- */
+const ACCOUNTS = [
+  { name: "Helix Therapeutics", segment: "Large biopharma", hasBiologicsPipeline: true, hasProteinEngTeam: true, hasStructuralBiology: true, activeProgramsPerYear: 6, rdBudgetTier: "high",
+    leads: [
+      { fullName: "Dr. Dana Reingold", title: "Head of Protein Engineering", role: "Head of Protein Engineering", seniority: "director", location: "Boston, MA", stage: "qualified", warmPath: "2nd-degree connection via a shared ex-colleague on the team",
+        signals: [ { kind: "competitor_engagement", strength: 90, summary: "Commented on Cradle's antibody-optimization post", source: "LinkedIn", d: 3 }, { kind: "hiring", strength: 80, summary: "Team has an open req for a senior antibody engineer", source: "Careers page", d: 9 }, { kind: "connection", strength: 70, summary: "2nd-degree via shared former colleague", source: "LinkedIn", d: 3 } ] },
+      { fullName: "Dr. Marcus Chen", title: "Structural Biology Lead", role: "Structural Biology", seniority: "lead", location: "Boston, MA", stage: "new",
+        signals: [ { kind: "publication", strength: 65, summary: "Published on a hard-to-express membrane target", source: "bioRxiv", d: 20 } ] } ] },
+  { name: "Antiverve Bio", segment: "Antibody biotech", hasBiologicsPipeline: true, hasProteinEngTeam: true, hasStructuralBiology: false, activeProgramsPerYear: 4, rdBudgetTier: "mid",
+    leads: [
+      { fullName: "Dr. Julia Okoye", title: "Antibody Engineering Lead", role: "Antibody Engineering", seniority: "lead", location: "San Diego, CA", stage: "qualified", warmPath: "Engaged with Scala's developability webinar",
+        signals: [ { kind: "content_engagement", strength: 75, summary: "Attended Scala's developability webinar", source: "Webinar", d: 6 }, { kind: "competitor_engagement", strength: 60, summary: "Liked an Absci case-study post", source: "LinkedIn", d: 12 } ] },
+      { fullName: "Aria Novak", title: "VP, Discovery", role: "Biologics Discovery", seniority: "vp", location: "San Diego, CA", stage: "new",
+        signals: [ { kind: "funding", strength: 70, summary: "Company closed a Series B extension", source: "Press", d: 15 } ] } ] },
+  { name: "Cassin Pharma", segment: "Large biopharma", hasBiologicsPipeline: true, hasProteinEngTeam: true, hasStructuralBiology: true, activeProgramsPerYear: 5, rdBudgetTier: "high",
+    leads: [
+      { fullName: "Dr. Sofia Patel", title: "Chief Scientific Officer", role: "Chief Scientific Officer", seniority: "csuite", location: "Basel, CH", stage: "contacted", warmPath: "Spoke at the same PEGS panel as a Scala advisor",
+        signals: [ { kind: "competitor_engagement", strength: 70, summary: "Commented on a Generate:Biomedicines announcement", source: "LinkedIn", d: 8 }, { kind: "connection", strength: 55, summary: "Shared PEGS panel with a Scala advisor", source: "Event", d: 40 } ] },
+      { fullName: "Dr. Luca Bianchi", title: "Enzyme Engineering Scientist", role: "Enzyme Engineering", seniority: "IC", location: "Basel, CH", stage: "contacted",
+        signals: [ { kind: "publication", strength: 50, summary: "Co-authored a biocatalysis optimization paper", source: "JACS", d: 45 } ] } ] },
+  { name: "Novad Biologics", segment: "Mid-cap biopharma", hasBiologicsPipeline: true, hasProteinEngTeam: true, hasStructuralBiology: true, activeProgramsPerYear: 4, rdBudgetTier: "high",
+    leads: [
+      { fullName: "Dr. Rachel Adler", title: "SVP, R&D", role: "VP/SVP of R&D", seniority: "vp", location: "Cambridge, UK", stage: "replied", warmPath: "Replied to a warm intro from a mutual connection",
+        signals: [ { kind: "job_change", strength: 65, summary: "Recently moved into the SVP R&D role", source: "LinkedIn", d: 25 }, { kind: "content_engagement", strength: 60, summary: "Downloaded Scala's ROI one-pager", source: "Website", d: 5 } ] },
+      { fullName: "Dr. Tom Meyer", title: "Head of Biologics Discovery", role: "Biologics Discovery", seniority: "director", location: "Cambridge, UK", stage: "meeting", warmPath: "Introduced by a portfolio-company CSO",
+        signals: [ { kind: "competitor_engagement", strength: 85, summary: "Asked a question on a LabGenius thread about ML models", source: "LinkedIn", d: 4 }, { kind: "connection", strength: 80, summary: "Warm intro from a portfolio-company CSO", source: "Referral", d: 7 } ] } ] },
+  { name: "Enzary Industrial", segment: "Industrial biotech", hasBiologicsPipeline: false, hasProteinEngTeam: true, hasStructuralBiology: false, activeProgramsPerYear: 3, rdBudgetTier: "mid",
+    leads: [
+      { fullName: "Dr. Ingrid Vos", title: "Head of Enzyme Engineering", role: "Enzyme Engineering", seniority: "director", location: "Delft, NL", stage: "new",
+        signals: [ { kind: "hiring", strength: 70, summary: "Hiring two computational enzyme designers", source: "Careers page", d: 11 }, { kind: "competitor_engagement", strength: 55, summary: "Followed Arzeda and Allozymes recently", source: "LinkedIn", d: 18 } ] } ] },
+];
+
+/* Scan pool (mirrors collectors/mock.ts) — some ICP buyers, some noise to reject. */
+const SCAN_POOL = [
+  { name: "Dr. Marcus Chen", headline: "Structural Biology Lead @ Helix Therapeutics | cryo-EM, hard targets", company: "Helix Therapeutics", kind: "competitor_engagement", context: "Reacted to Cradle's post on antibody developability prediction", source: "LinkedIn · Cradle post" },
+  { name: "Dr. Priya Nair", headline: "Director, Antibody Engineering | biologics discovery & optimization", company: "Kestrel Biologics", kind: "competitor_engagement", context: "Commented on an Absci post about generative antibody design", source: "LinkedIn · Absci post" },
+  { name: "Dr. Hannah Weiss", headline: "Principal Scientist, Protein Engineering — expression & stability", company: "Meridian Bio", kind: "competitor_engagement", context: "Commented on a LabGenius thread about ML-guided design", source: "LinkedIn · LabGenius post" },
+  { name: "Dr. Omar Haddad", headline: "Head of Enzyme Engineering | industrial biocatalysis", company: "Kestrel Biologics", kind: "hiring", context: "Company posted 2 roles for computational protein designers", source: "Careers page" },
+  { name: "Dr. Yuki Tanaka", headline: "VP, Biologics Discovery — antibody & protein therapeutics", company: "Meridian Bio", kind: "funding", context: "Company announced a $60M Series B for its biologics platform", source: "Press release" },
+  { name: "Jordan Blake", headline: "Technical Recruiter | hiring in biotech & pharma", company: "TalentBridge", kind: "competitor_engagement", context: "Liked a Cradle post", source: "LinkedIn · Cradle post" },
+  { name: "Sam Rivera", headline: "PhD student | molecular biology | seeking 2026 internships", company: "State University", kind: "competitor_engagement", context: "Liked an Absci post", source: "LinkedIn · Absci post" },
+  { name: "Alex Turner", headline: "Marketing Manager, Life Sciences SaaS", company: "CloudLIMS", kind: "competitor_engagement", context: "Commented on a LabGenius post", source: "LinkedIn · LabGenius post" },
+];
+let scanCursor = 0;
+
+/* ---------- heuristic triage (ported from classify.ts) ---------- */
+const NOISE = /(recruit|talent|student|intern|marketing|sales|account exec|investor relations)/i;
+const TECH2 = /(protein eng|antibody eng|enzyme eng|structural bio|biologics discovery|protein science|principal scientist)/i;
+const ECON2 = /(chief scientific|cso|vp|vice president|svp|head of r&d|r&d platform)/i;
+const STRENGTH_BY_KIND = { competitor_engagement: 78, hiring: 72, funding: 66, publication: 56, job_change: 62, content_engagement: 60 };
+function seniorityOf(h) { h = h.toLowerCase(); if (/chief|cso|c-suite/.test(h)) return "csuite"; if (/\bvp\b|vice president|svp/.test(h)) return "vp"; if (/head|director/.test(h)) return "director"; if (/lead|principal|staff/.test(h)) return "lead"; return "IC"; }
+function inferFirmographics(t) { t = t.toLowerCase(); return { hasBiologicsPipeline: /biologic|antibody|therapeutic/.test(t), hasProteinEngTeam: /protein eng|antibody eng|enzyme eng|protein science|principal scientist/.test(t), hasStructuralBiology: /structural bio|cryo-em|crystallog/.test(t), activeProgramsPerYear: 2, rdBudgetTier: "mid" }; }
+
+/* ---------- state ---------- */
+const state = { leads: [], view: "pipeline", selectedId: null };
+function buildLeads() {
+  const out = [];
+  for (const a of ACCOUNTS) {
+    const account = { name: a.name, segment: a.segment, hasBiologicsPipeline: a.hasBiologicsPipeline, hasProteinEngTeam: a.hasProteinEngTeam, hasStructuralBiology: a.hasStructuralBiology, activeProgramsPerYear: a.activeProgramsPerYear, rdBudgetTier: a.rdBudgetTier };
+    for (const L of a.leads) {
+      const lead = { id: uid("lead"), fullName: L.fullName, title: L.title, role: L.role, seniority: L.seniority, location: L.location, linkedinUrl: "https://www.linkedin.com/in/example", account, stage: L.stage, warmPath: L.warmPath || null, aiGenerated: false,
+        signals: L.signals.map((s) => ({ id: uid("sig"), kind: s.kind, strength: s.strength, summary: s.summary, source: s.source, occurredAt: daysAgo(s.d) })), messages: [] };
+      rescore(lead); out.push(lead);
+    }
+  }
+  out.sort((x, y) => y.priority - x.priority);
+  state.leads = out;
+}
+
+/* ---------- helpers ---------- */
+const tone = (p) => (p >= 60 ? "hot" : p >= 40 ? "warm" : "cool");
+function timeAgo(iso) { const d = Math.round((Date.now() - new Date(iso).getTime()) / DAY); if (d <= 0) return "today"; if (d === 1) return "1d ago"; if (d < 30) return d + "d ago"; return Math.round(d / 30) + "mo ago"; }
+const initials = (n) => n.replace(/^(dr\.?|prof\.?)\s+/i, "").split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+const byPriority = () => [...state.leads].sort((a, b) => b.priority - a.priority);
+const CIRC = 2 * Math.PI * 34;
+
+/* ---------- render ---------- */
+function ringSvg(v, cls) { const off = CIRC - (CIRC * v) / 100; return `<div class="gauge ${cls}"><div class="ring-box"><svg width="84" height="84" viewBox="0 0 84 84"><circle class="ring-bg" cx="42" cy="42" r="34" fill="none" stroke-width="8"/><circle class="ring-val" cx="42" cy="42" r="34" fill="none" stroke-width="8" stroke-dasharray="${CIRC}" stroke-dashoffset="${off}"/></svg><div class="ring-num">${v}</div></div><div class="k">${cls === "f" ? "◆ Fit" : cls === "i" ? "▲ Intent" : "● Warmth"}</div></div>`; }
+
+function renderStats() {
+  const ls = state.leads; const hot = ls.filter((l) => l.priority >= 60).length; const warm = ls.filter((l) => l.warmPath || l.warmth > 0).length; const meet = ls.filter((l) => l.stage === "meeting").length;
+  return `<div class="stats"><div class="stat"><div class="n">${ls.length}</div><div class="l">Leads in pipeline</div></div><div class="stat hot"><div class="n">${hot}</div><div class="l">High-priority (60+)</div></div><div class="stat warm"><div class="n">${warm}</div><div class="l">Warm paths available</div></div><div class="stat meet"><div class="n">${meet}</div><div class="l">Meetings booked</div></div></div>`;
+}
+function renderPipeline() {
+  const rows = byPriority().map((l) => `<tr data-open="${l.id}">
+    <td><div class="pri"><span class="pri-num t-${tone(l.priority)}">${l.priority}</span><span class="pri-bar"><span style="width:${l.priority}%"></span></span></div></td>
+    <td><div class="person"><div class="nm">${esc(l.fullName)}</div><div class="rl">${esc(l.title)}</div></div></td>
+    <td><div class="company"><div class="cn">${esc(l.account.name)}</div><div class="sg">${esc(l.account.segment)}</div></div></td>
+    <td><div class="scorecells"><div class="scorecell f"><div class="v">${l.fit}</div><div class="k">Fit</div></div><div class="scorecell i"><div class="v">${l.intent}</div><div class="k">Int</div></div><div class="scorecell w"><div class="v">${l.warmth}</div><div class="k">Warm</div></div></div></td>
+    <td><span class="chip stage-${l.stage}">${STAGE_LABELS[l.stage]}</span></td>
+    <td><div class="signal-cell">${l.signals[0] ? `<span class="dot"></span>${esc(l.signals[0].summary)}` : '<span style="color:var(--ink-faint)">No signals yet</span>'}</div></td></tr>`).join("");
+  return `<div class="panel"><div class="tbl-scroll"><table class="tbl"><thead><tr><th>Priority</th><th>Person</th><th>Company</th><th>Fit / Intent / Warmth</th><th>Stage</th><th>Top signal</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+}
+function renderBoard() {
+  return `<div class="board">${STAGES.map((st) => { const col = byPriority().filter((l) => l.stage === st); return `<div class="kcol"><h3>${STAGE_LABELS[st]} <span>${col.length}</span></h3>${col.map((l) => `<div class="kcard" data-open="${l.id}"><div class="top"><span class="nm">${esc(l.fullName)}<span class="dot t-${tone(l.priority)}"></span></span><span class="p">${l.priority}</span></div><div class="rl">${esc(l.title)}</div><div class="co">${esc(l.account.name)}</div></div>`).join("")}</div>`; }).join("")}</div>`;
+}
+function analytics() {
+  const ls = state.leads, total = ls.length; const idx = (s) => STAGES.indexOf(s);
+  const cumulative = STAGES.map((st) => ls.filter((l) => idx(l.stage) >= idx(st)).length);
+  const funnel = STAGES.map((st, i) => ({ label: STAGE_LABELS[st], count: cumulative[i], conv: i === 0 ? null : cumulative[i - 1] ? Math.round((cumulative[i] / cumulative[i - 1]) * 100) : 0 }));
+  const DEMO = { connection: 52, content_engagement: 41, competitor_engagement: 34, hiring: 28, job_change: 25, funding: 22, publication: 18 };
+  const kc = {}; ls.forEach((l) => l.signals.forEach((s) => { (kc[s.kind] = kc[s.kind] || new Set()).add(l.id); }));
+  const bySignal = Object.keys(kc).map((k) => ({ kind: k, label: SIGNAL_LABELS[k] || k, leads: kc[k].size, rate: DEMO[k] || 20 })).sort((a, b) => b.rate - a.rate);
+  const sow = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() - x.getDay()); return x; };
+  const weeks = []; for (let i = 7; i >= 0; i--) { const st = sow(new Date(Date.now() - i * 7 * DAY)); weeks.push({ t: st.getTime(), label: st.toLocaleDateString("en-US", { month: "short", day: "numeric" }), signals: 0 }); }
+  ls.forEach((l) => l.signals.forEach((s) => { const w = weeks.find((x) => x.t === sow(new Date(s.occurredAt)).getTime()); if (w) w.signals++; }));
+  const avg = total ? Math.round(ls.reduce((s, l) => s + l.priority, 0) / total) : 0;
+  const warmShare = total ? Math.round((ls.filter((l) => l.warmPath || l.warmth > 0).length / total) * 100) : 0;
+  return { total, avg, warmShare, meetings: ls.filter((l) => l.stage === "meeting").length, funnel, bySignal, trend: weeks };
+}
+function renderAnalytics() {
+  const a = analytics(); const maxF = Math.max(...a.funnel.map((f) => f.count), 1); const maxT = Math.max(...a.trend.map((t) => t.signals), 1);
+  return `<div class="analytics">
+  <div class="stats"><div class="stat"><div class="n">${a.total}</div><div class="l">Leads in pipeline</div></div><div class="stat"><div class="n">${a.avg}</div><div class="l">Avg priority score</div></div><div class="stat warm"><div class="n">${a.warmShare}%</div><div class="l">Have a warm path</div></div><div class="stat meet"><div class="n">${a.meetings}</div><div class="l">Meetings booked</div></div></div>
+  <div class="charts-grid">
+    <div class="chart-card"><h3>Pipeline funnel</h3><p class="chart-sub">How many leads have reached each stage.</p><div class="funnel">${a.funnel.map((f) => `<div class="funnel-row"><div class="funnel-label">${f.label}</div><div class="funnel-track"><div class="funnel-bar" style="width:${(f.count / maxF) * 100}%"><span class="funnel-count">${f.count}</span></div></div><div class="funnel-conv">${f.conv == null ? "—" : f.conv + "%"}</div></div>`).join("")}</div><div class="chart-foot">Right column = conversion from the previous stage.</div></div>
+    <div class="chart-card"><h3>Response rate by signal type <span class="demo-pill">demo</span></h3><p class="chart-sub">Which intent signals convert best once contacted.</p><div class="hbars">${a.bySignal.map((s) => `<div class="hbar-row"><div class="hbar-label">${s.label}<span class="hbar-n">${s.leads} lead${s.leads === 1 ? "" : "s"}</span></div><div class="hbar-track"><div class="hbar-fill" style="width:${s.rate}%"></div></div><div class="hbar-val">${s.rate}%</div></div>`).join("")}</div></div>
+    <div class="chart-card wide"><h3>Signals detected — last 8 weeks</h3><p class="chart-sub">Volume of buying signals surfaced by the scan.</p><div class="trend">${a.trend.map((t) => `<div class="trend-col"><div class="trend-bar-box"><div class="trend-bar" style="height:${(t.signals / maxT) * 100}%">${t.signals > 0 ? `<span class="trend-val">${t.signals}</span>` : ""}</div></div><div class="trend-x">${t.label}</div></div>`).join("")}</div></div>
+    <div class="chart-card wide"><h3>CRM &amp; export</h3><p class="chart-sub">Push the pipeline into your CRM, or export it anywhere.</p><div class="crm-row"><button class="btn primary" data-act="crm">⤴ Sync to CRM (demo)</button><button class="btn" data-act="export">⬇ Export CSV</button><span class="crm-note">HubSpot/Salesforce connector drops in for the live version — CSV export works right here.</span></div></div>
+  </div></div>`;
+}
+function renderDrawer() {
+  const l = state.leads.find((x) => x.id === state.selectedId); if (!l) return "";
+  const sent = l.messages.filter((m) => m.status !== "draft").length;
+  const hasDraft = l.messages.some((m) => m.status === "draft");
+  const canDraft = l.messages.length < SEQUENCE.length && !hasDraft;
+  const nextLabel = (SEQUENCE[l.messages.length] || {}).label || "";
+  const factorsHtml = l.factors.fit.length ? `<div class="dz-section"><h4>ICP fit breakdown</h4><ul class="factors">${l.factors.fit.map((f) => `<li><span>${esc(f.label)}</span><span class="pts">+${f.points}</span></li>`).join("")}</ul></div>` : "";
+  const signalsHtml = l.signals.length ? `<ul class="signals">${l.signals.map((s) => `<li><div class="sig-head"><span class="sig-kind">${SIGNAL_LABELS[s.kind] || s.kind}</span><span class="sig-when">${timeAgo(s.occurredAt)}</span></div><div class="sig-txt">${esc(s.summary)}</div></li>`).join("")}</ul>` : `<div class="why" style="border-color:var(--warm)">No signals yet — this lead scores on ICP fit alone. Run a signal scan to surface intent.</div>`;
+  const msgsHtml = l.messages.length ? `<ul class="msgs">${l.messages.map((m) => { const lab = (SEQUENCE.find((s) => s.step === m.step) || {}).label || ("Step " + m.step); return `<li class="msg status-${m.status}"><div class="msg-head"><span class="msg-step">Step ${m.step} · ${lab} · ${m.channel}</span><span class="msg-status s-${m.status}">${m.status}</span></div><div class="msg-body">${esc(m.body)}</div><div class="msg-actions">${m.status === "draft" ? `<button class="btn" data-act="copy" data-body="${esc(m.body)}">Copy</button><a class="btn" href="${l.linkedinUrl}" target="_blank" rel="noreferrer">Open LinkedIn ↗</a><button class="btn primary" data-act="msg" data-mid="${m.id}" data-status="sent">Mark sent</button>` : m.status === "sent" ? `<button class="btn" data-act="msg" data-mid="${m.id}" data-status="replied">Mark replied</button>` : `<span class="replied-badge">✓ Replied</span>`}</div></li>`; }).join("")}</ul>` : "";
+  return `<div class="scrim" data-act="close"></div><aside class="drawer"><div class="drawer-in">
+    <button class="dz-close" data-act="close" aria-label="Close">×</button>
+    <div class="dz-top"><div class="dz-av">${initials(l.fullName)}</div><div><div class="dz-name">${esc(l.fullName)}</div><div class="dz-role">${esc(l.title)} · ${esc(l.account.name)}</div></div></div>
+    <div class="dz-meta"><span class="chip stage-${l.stage}">${STAGE_LABELS[l.stage]}</span>${l.warmPath ? '<span class="chip warm">● Warm path</span>' : ""}${l.location ? `<span class="chip">${esc(l.location)}</span>` : ""}${l.account.segment ? `<span class="chip">${esc(l.account.segment)}</span>` : ""}</div>
+    <div class="gauges">${ringSvg(l.fit, "f")}${ringSvg(l.intent, "i")}${ringSvg(l.warmth, "w")}</div>
+    <div class="dz-section"><h4>Why this lead</h4><div class="why">${esc(l.why || "")}</div></div>
+    ${factorsHtml}
+    <div class="dz-section"><h4>Signals (${l.signals.length})</h4>${signalsHtml}</div>
+    <div class="dz-section"><h4>AI-drafted opener</h4><div class="draft">${esc(l.opener || "")}</div><div class="dz-actions"><button class="btn" data-act="copy" data-body="${esc(l.opener || "")}">Copy opener</button></div></div>
+    <div class="dz-section"><h4>Outreach sequence<span class="seq-count">${sent}/${SEQUENCE.length} sent</span></h4>
+      <p class="assist-note">Assisted send — copy the message, then send it from your own LinkedIn. (Auto-send via Unipile is the paid tier.)</p>
+      ${msgsHtml}
+      ${canDraft ? `<button class="btn" data-act="draft" style="margin-top:12px">✎ Draft ${l.messages.length === 0 ? "opener" : nextLabel.toLowerCase()}</button>` : (l.messages.length >= SEQUENCE.length ? `<p class="assist-note" style="margin-top:12px">Sequence complete — all ${SEQUENCE.length} steps drafted.</p>` : "")}
+    </div>
+    <div class="stage-row"><label>Stage</label><select class="stage-select" data-act="stage">${STAGES.map((s) => `<option value="${s}"${s === l.stage ? " selected" : ""}>${STAGE_LABELS[s]}</option>`).join("")}</select></div>
+  </div></aside>`;
+}
+function render() {
+  const drawerScroll = document.querySelector(".drawer")?.scrollTop;
+  const head = state.view === "analytics"
+    ? `<div class="eyebrow">Analytics</div><h1>How the pipeline is performing.</h1><p>Funnel, signal effectiveness and volume — plus CRM export.</p>`
+    : `<div class="eyebrow">Ranked pipeline</div><h1>Your best next conversations, first.</h1><p>Every lead scored on fit, intent and warmth — with the reason attached.</p>`;
+  let main = "";
+  if (state.view === "analytics") main = renderAnalytics();
+  else main = renderStats() + (state.view === "pipeline" ? renderPipeline() : renderBoard());
+  document.getElementById("root").innerHTML = `<div class="app">
+    <header class="topbar"><div class="wrap topbar-inner">
+      <div class="brand"><div class="mark"></div><div class="brand-name">Scala Biodesign · <b>LeadScope</b></div></div>
+      <div class="topbar-spacer"></div>
+      <span class="budget-chip" title="Demo runs free — no AI spend">AI $0.00 <span class="cap">/ $1</span></span>
+      <div class="seg"><button data-view="pipeline" class="${state.view === "pipeline" ? "active" : ""}">Pipeline</button><button data-view="board" class="${state.view === "board" ? "active" : ""}">Board</button><button data-view="analytics" class="${state.view === "analytics" ? "active" : ""}">Analytics</button></div>
+      <button class="btn" data-act="scan">⟳ Run signal scan</button>
+    </div></header>
+    <main class="wrap"><div class="pagehead">${head}</div>${main}</main>
+    ${renderDrawer()}
+  </div>`;
+  // animate rings + bars
+  requestAnimationFrame(() => {
+    document.querySelectorAll(".ring-val").forEach((c) => { const off = c.getAttribute("stroke-dashoffset"); c.setAttribute("stroke-dashoffset", CIRC); requestAnimationFrame(() => c.setAttribute("stroke-dashoffset", off)); });
+    if (drawerScroll) { const d = document.querySelector(".drawer"); if (d) d.scrollTop = drawerScroll; }
+  });
+}
+
+/* ---------- actions ---------- */
+let toastTimer;
+function toast(msg) { const r = document.getElementById("toast-root"); r.innerHTML = `<div class="toast">${esc(msg)}</div>`; clearTimeout(toastTimer); toastTimer = setTimeout(() => (r.innerHTML = ""), 3200); }
+function copyText(t) { navigator.clipboard && navigator.clipboard.writeText(t); toast("Copied to clipboard"); }
+function setStage(l, stage) { l.stage = stage; render(); toast("Moved to " + STAGE_LABELS[stage]); }
+function draftNext(l) { const used = new Set(l.messages.map((m) => m.step)); const next = SEQUENCE.find((s) => !used.has(s.step)); if (!next) return; l.messages.push({ id: uid("msg"), channel: next.channel, step: next.step, body: composeBody(next.step, l), status: "draft" }); render(); toast("Drafted next step"); }
+function markMsg(l, mid, status) { const m = l.messages.find((x) => x.id === mid); if (!m) return; m.status = status; if (status === "sent" && (l.stage === "new" || l.stage === "qualified")) l.stage = "contacted"; if (status === "replied" && l.stage !== "meeting") l.stage = "replied"; render(); toast(status === "sent" ? "Marked sent · stage → Contacted" : "Marked replied · stage → Replied"); }
+function runScan() {
+  const picked = []; for (let i = 0; i < 4; i++) picked.push(SCAN_POOL[(scanCursor + i) % SCAN_POOL.length]); scanCursor = (scanCursor + 4) % SCAN_POOL.length;
+  let newLeads = 0, added = 0, relevant = 0;
+  for (const e of picked) {
+    const isBuyer = !NOISE.test(e.headline) && (TECH2.test(e.headline) || ECON2.test(e.headline)); if (!isBuyer) continue; relevant++;
+    let lead = state.leads.find((l) => l.fullName === e.name);
+    if (!lead) { const account = Object.assign({ name: e.company, segment: "Discovered via signal" }, inferFirmographics(e.headline + " " + e.company)); lead = { id: uid("lead"), fullName: e.name, title: e.headline.split(/[|@]/)[0].trim(), role: e.headline.split(/[|@]/)[0].trim(), seniority: seniorityOf(e.headline), location: null, linkedinUrl: "https://www.linkedin.com/in/example", account, stage: "new", warmPath: null, aiGenerated: false, signals: [], messages: [] }; state.leads.push(lead); newLeads++; }
+    if (!lead.signals.some((s) => s.summary === e.context)) { lead.signals.unshift({ id: uid("sig"), kind: e.kind, strength: STRENGTH_BY_KIND[e.kind] || 55, summary: e.context, source: e.source, occurredAt: daysAgo(0) }); added++; }
+    rescore(lead);
+  }
+  render(); toast(`Scan: ${relevant}/4 relevant · +${newLeads} leads, ${added} signals · heuristic triage`);
+}
+function exportCsv() {
+  const cell = (v) => { const s = v == null ? "" : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  const H = ["Name", "Title", "Role", "Seniority", "Company", "Segment", "Location", "Fit", "Intent", "Warmth", "Priority", "Stage", "Warm path", "Top signal", "LinkedIn"];
+  const rows = byPriority().map((l) => [l.fullName, l.title, l.role, l.seniority, l.account.name, l.account.segment, l.location, l.fit, l.intent, l.warmth, l.priority, l.stage, l.warmPath, l.signals[0] ? l.signals[0].summary : "", l.linkedinUrl].map(cell).join(","));
+  const csv = [H.join(","), ...rows].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" }); const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = "leadscope-pipeline.csv"; a.click(); URL.revokeObjectURL(url); toast("Exported CSV");
+}
+
+/* ---------- events ---------- */
+document.addEventListener("click", (ev) => {
+  const t = ev.target.closest("[data-act],[data-view],[data-open]"); if (!t) return;
+  if (t.dataset.view) { state.view = t.dataset.view; render(); return; }
+  if (t.dataset.open) { state.selectedId = t.dataset.open; render(); return; }
+  const act = t.dataset.act; const l = state.leads.find((x) => x.id === state.selectedId);
+  if (act === "close") { state.selectedId = null; render(); }
+  else if (act === "scan") runScan();
+  else if (act === "export") exportCsv();
+  else if (act === "crm") toast("Synced " + state.leads.length + " leads → HubSpot (demo)");
+  else if (act === "copy") copyText(t.dataset.body || "");
+  else if (act === "draft" && l) draftNext(l);
+  else if (act === "msg" && l) markMsg(l, t.dataset.mid, t.dataset.status);
+});
+document.addEventListener("change", (ev) => { const t = ev.target.closest('[data-act="stage"]'); if (!t) return; const l = state.leads.find((x) => x.id === state.selectedId); if (l) setStage(l, t.value); });
+
+buildLeads(); render();
+</script>
+</body>
+</html>
