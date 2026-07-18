@@ -439,8 +439,8 @@ function seniorityOf(h) { h = h.toLowerCase(); if (/chief|cso|c-suite/.test(h)) 
 function inferFirmographics(t) { t = t.toLowerCase(); return { hasBiologicsPipeline: /biologic|antibody|therapeutic/.test(t), hasProteinEngTeam: /protein eng|antibody eng|enzyme eng|protein science|principal scientist/.test(t), hasStructuralBiology: /structural bio|cryo-em|crystallog/.test(t), activeProgramsPerYear: 2, rdBudgetTier: "mid" }; }
 
 /* ---------- state ---------- */
-const state = { leads: [], view: "pipeline", selectedId: null, sigComp: "All", sigRel: false, skin: "teal" };
-try { state.skin = localStorage.getItem("leadscope-skin") || "teal"; } catch (e) {}
+const state = { leads: [], view: "pipeline", selectedId: null, sigComp: "All", sigRel: false, skin: "scala" };
+try { state.skin = localStorage.getItem("leadscope-skin") || "scala"; } catch (e) {}
 document.documentElement.setAttribute("data-skin", state.skin);
 function buildLeads() {
   const out = [];
