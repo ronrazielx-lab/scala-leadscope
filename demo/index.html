@@ -227,6 +227,16 @@ select.stage-select { flex: 1; border: 1px solid var(--line); background: var(--
 .sig-arrow { color: var(--ink-faint); }
 .sig-outcome { color: var(--ink-soft); } .sig-outcome b { color: var(--accent); font-weight: 650; }
 .sig-outcome.rej b { color: var(--ink-faint); }
+.filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 20px 0 0; }
+.filt-lbl { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; color: var(--ink-faint); margin-right: 2px; }
+.filt-chip { border: 1px solid var(--line); background: var(--surface); color: var(--ink-soft); font-size: 0.76rem; font-weight: 600; padding: 5px 11px; border-radius: 999px; }
+.filt-chip:hover { border-color: var(--accent); color: var(--ink); }
+.filt-chip.active { background: var(--accent); color: #fff; border-color: transparent; }
+@media (prefers-color-scheme: dark) { .filt-chip.active { color: #05100e; } }
+.filt-toggle { border: 1px solid var(--line); background: var(--surface); color: var(--ink-soft); font-size: 0.76rem; font-weight: 600; padding: 5px 11px; border-radius: 999px; }
+.filt-toggle.on { background: var(--accent-wash); color: var(--accent-deep); border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
+@media (prefers-color-scheme: dark) { .filt-toggle.on { color: var(--accent); } }
+.filt-count { font-family: var(--mono); font-size: 0.72rem; color: var(--ink-faint); margin-left: auto; }
 .empty { text-align: center; padding: 80px 20px; color: var(--ink-faint); }
 .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 70; background: var(--ink); color: var(--bg); padding: 11px 18px; border-radius: 10px; font-size: 0.85rem; font-weight: 550; box-shadow: var(--shadow-lg); }
 @media (prefers-color-scheme: dark) { .toast { background: var(--accent); color: #05100e; } }
@@ -356,6 +366,15 @@ const MARKET_SIGNALS = [
     who: "Kestrel Biologics", whoHeadline: "Antibody biotech · San Francisco, CA", comment: null, kind: "hiring", strength: 72, relevant: true, outcome: "Hiring signal → account flagged: Kestrel Biologics" },
   { d: 6.5, competitor: "Cradle", topic: "Structure prediction for hard targets", author: "Nils Aaberg", authorTitle: "Research Lead @ Cradle", excerpt: "Predicting structures for membrane and multi-domain proteins — where current tools still break.", type: "comment",
     who: "Alex Turner", whoHeadline: "Marketing Manager, Life Sciences SaaS", comment: "Great content, really informative!", kind: "competitor_engagement", strength: 15, relevant: false, outcome: "Filtered — marketing role, not a buyer" },
+  { d: 7.2, competitor: "Biomatter", topic: "Digital enzyme design", author: "Greta Sauer", authorTitle: "Head of Design @ Biomatter", excerpt: "Our digital enzyme design pipeline for sustainable manufacturing — a 3x activity improvement case study.", type: "comment", who: "Dr. Lena Fischer", whoHeadline: "Enzyme Engineering Lead @ Helvetica Bio", comment: "Activity is one thing — how stable are the designs under real industrial process conditions?", kind: "competitor_engagement", strength: 71, relevant: true, outcome: "New lead: Dr. Lena Fischer" },
+  { d: 8.0, competitor: "Ginkgo Bioworks", topic: "Enzyme engineering services", author: "Paul Mendez", authorTitle: "Sr. Director, Protein Engineering @ Ginkgo", excerpt: "Scaling enzyme engineering with automated foundries — the throughput and cost curves.", type: "comment", who: "Dr. Raj Patel", whoHeadline: "Head of Protein Engineering @ Cardinal Therapeutics", comment: "Interesting economics. We're weighing in-house vs outsourced for our next enzyme program.", kind: "competitor_engagement", strength: 76, relevant: true, outcome: "New lead: Dr. Raj Patel" },
+  { d: 8.6, competitor: "Basecamp Research", topic: "AI protein datasets", author: "Ana Ruiz", authorTitle: "Data Lead @ Basecamp Research", excerpt: "Why data diversity beats model size for protein design — our latest analysis.", type: "comment", who: "Dr. Mei Lin", whoHeadline: "Computational Biology Lead @ Kestrel Biologics", comment: "Strong point on distribution coverage. How are you sourcing genuinely novel sequence space?", kind: "competitor_engagement", strength: 69, relevant: true, outcome: "New lead: Dr. Mei Lin" },
+  { d: 9.1, competitor: "LabGenius", topic: "Therapeutic antibody optimization", author: "Tom Fielding", authorTitle: "Head of Platform @ LabGenius", excerpt: "Multi-parameter optimization — balancing affinity, developability and immunogenicity at once.", type: "reaction", who: "Marcus Reilly", whoHeadline: "Investor Relations @ BioCap Partners", comment: null, kind: "competitor_engagement", strength: 16, relevant: false, outcome: "Filtered — investor, not a buyer" },
+  { d: 10.0, competitor: "Job market", topic: "Hiring signal", author: "Northwind Bio", authorTitle: "Careers page", excerpt: "Open role: Principal Antibody Engineer — lead developability and humanization efforts.", type: "job", who: "Northwind Bio", whoHeadline: "Mid-cap biopharma · Cambridge, UK", comment: null, kind: "hiring", strength: 70, relevant: true, outcome: "Hiring signal → account flagged: Northwind Bio" },
+  { d: 11.0, competitor: "Newswire", topic: "Funding round", author: "Lumen Therapeutics", authorTitle: "Press release", excerpt: "Lumen Therapeutics closes $85M Series C to scale its antibody-discovery platform.", type: "comment", who: "Dr. Nadia Rahman", whoHeadline: "Head of Antibody Discovery @ Lumen Therapeutics", comment: "Proud of the team — now scaling our protein-engineering throughput considerably.", kind: "funding", strength: 68, relevant: true, outcome: "New lead: Dr. Nadia Rahman" },
+  { d: 12.0, competitor: "Allozymes", topic: "High-throughput enzyme screening", author: "Wei Chen", authorTitle: "Co-founder @ Allozymes", excerpt: "Screening millions of enzyme variants with microfluidics — our platform overview.", type: "reaction", who: "Emma Scott", whoHeadline: "Talent Partner @ BioRecruit", comment: null, kind: "competitor_engagement", strength: 17, relevant: false, outcome: "Filtered — recruiter, not a buyer" },
+  { d: 13.0, competitor: "Absci", topic: "Generative antibody design", author: "Priya Deshpande", authorTitle: "Director of ML @ Absci", excerpt: "From sequence to validated binder in weeks — updated timelines from our latest campaigns.", type: "comment", who: "Dr. Felix Braun", whoHeadline: "VP, Protein Engineering @ Northwind Bio", comment: "The timelines are the headline. What's your hit rate on developability-clean designs?", kind: "competitor_engagement", strength: 79, relevant: true, outcome: "New lead: Dr. Felix Braun" },
+  { d: 14.0, competitor: "Cradle", topic: "Protein expression optimization", author: "Nils Aaberg", authorTitle: "Research Lead @ Cradle", excerpt: "Predicting expression yield before the bench — new module in our platform.", type: "comment", who: "Dr. Ben Carter", whoHeadline: "Director of Protein Sciences @ Aurora Biologics", comment: "Expression is our silent killer on timelines. Keen to see how the predictions hold up on hard targets.", kind: "competitor_engagement", strength: 77, relevant: true, outcome: "New lead: Dr. Ben Carter" },
 ];
 
 function timeAgoDays(d) { if (d < 1) return Math.max(1, Math.round(d * 24)) + "h ago"; const n = Math.round(d); return n === 1 ? "1d ago" : n + "d ago"; }
@@ -376,11 +395,15 @@ function signalCard(s) {
     <div class="sig-extract"><span class="sig-tag">${SIGNAL_LABELS[s.kind] || s.kind} · strength ${s.strength}</span><span class="sig-arrow">→</span><span class="sig-outcome ${s.relevant ? "" : "rej"}"><b>${esc(s.outcome)}</b></span></div>
   </div>`;
 }
+const NON_COMPETITOR = new Set(["Job market", "Newswire"]);
 function renderSignals() {
   const S = MARKET_SIGNALS;
   const rel = S.filter((s) => s.relevant).length;
-  const comps = new Set(S.filter((s) => s.competitor !== "Job market").map((s) => s.competitor)).size;
+  const comps = new Set(S.filter((s) => !NON_COMPETITOR.has(s.competitor)).map((s) => s.competitor)).size;
   const newL = S.filter((s) => /^New lead/.test(s.outcome)).length;
+  const sources = ["All", ...[...new Set(S.map((s) => s.competitor))]];
+  const shown = S.filter((s) => (state.sigComp === "All" || s.competitor === state.sigComp) && (!state.sigRel || s.relevant));
+  const chips = sources.map((c) => `<button class="filt-chip ${state.sigComp === c ? "active" : ""}" data-sigcomp="${esc(c)}">${esc(c)}</button>`).join("");
   return `<div class="stats">
     <div class="stat"><div class="n">${S.length}</div><div class="l">Signals detected</div></div>
     <div class="stat"><div class="n">${Math.round((rel / S.length) * 100)}%</div><div class="l">ICP-relevant</div></div>
@@ -388,7 +411,8 @@ function renderSignals() {
     <div class="stat meet"><div class="n">${newL}</div><div class="l">New leads surfaced</div></div>
   </div>
   <p class="mkt-intro">Everything the system saw in the market — the original post and who wrote it, who engaged and exactly what they said, and the call it made. Fully transparent, so you can judge signal quality and tune what we track.</p>
-  <div class="feed-list">${S.map(signalCard).join("")}</div>`;
+  <div class="filters"><span class="filt-lbl">Source</span>${chips}<button class="filt-toggle ${state.sigRel ? "on" : ""}" data-sigrel>${state.sigRel ? "✓ " : ""}ICP-relevant only</button><span class="filt-count">showing ${shown.length} of ${S.length}</span></div>
+  <div class="feed-list">${shown.length ? shown.map(signalCard).join("") : '<div class="empty">No signals match this filter.</div>'}</div>`;
 }
 
 /* ---------- heuristic triage (ported from classify.ts) ---------- */
@@ -400,7 +424,7 @@ function seniorityOf(h) { h = h.toLowerCase(); if (/chief|cso|c-suite/.test(h)) 
 function inferFirmographics(t) { t = t.toLowerCase(); return { hasBiologicsPipeline: /biologic|antibody|therapeutic/.test(t), hasProteinEngTeam: /protein eng|antibody eng|enzyme eng|protein science|principal scientist/.test(t), hasStructuralBiology: /structural bio|cryo-em|crystallog/.test(t), activeProgramsPerYear: 2, rdBudgetTier: "mid" }; }
 
 /* ---------- state ---------- */
-const state = { leads: [], view: "pipeline", selectedId: null };
+const state = { leads: [], view: "pipeline", selectedId: null, sigComp: "All", sigRel: false };
 function buildLeads() {
   const out = [];
   for (const a of ACCOUNTS) {
@@ -572,7 +596,9 @@ function exportCsv() {
 
 /* ---------- events ---------- */
 document.addEventListener("click", (ev) => {
-  const t = ev.target.closest("[data-act],[data-view],[data-open]"); if (!t) return;
+  const t = ev.target.closest("[data-act],[data-view],[data-open],[data-sigcomp],[data-sigrel]"); if (!t) return;
+  if (t.hasAttribute("data-sigcomp")) { state.sigComp = t.getAttribute("data-sigcomp"); render(); return; }
+  if (t.hasAttribute("data-sigrel")) { state.sigRel = !state.sigRel; render(); return; }
   if (t.dataset.view) { state.view = t.dataset.view; render(); return; }
   if (t.dataset.open) { state.selectedId = t.dataset.open; render(); return; }
   const act = t.dataset.act; const l = state.leads.find((x) => x.id === state.selectedId);
