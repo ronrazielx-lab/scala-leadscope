@@ -253,6 +253,24 @@ select.stage-select { flex: 1; border: 1px solid var(--line); background: var(--
 
 .filt-count { font-family: var(--mono); font-size: 0.72rem; color: var(--ink-faint); margin-left: auto; }
 .empty { text-align: center; padding: 80px 20px; color: var(--ink-faint); }
+/* scout — field-intel feed */
+.scout-add { display: flex; gap: 8px; margin: 20px 0 0; flex-wrap: wrap; align-items: center; }
+.scout-input { flex: 1; min-width: 260px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 10px; padding: 10px 14px; font-size: 0.86rem; font-family: var(--sans); }
+.scout-input::placeholder { color: var(--ink-faint); }
+.scout-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-wash); }
+.scout-hint { font-size: 0.76rem; color: var(--ink-faint); margin: 8px 0 0; }
+.sig-card.intel { padding: 16px 20px; }
+.intel-title { display: inline-block; font-family: var(--display); font-weight: 680; font-size: 1.04rem; letter-spacing: -0.01em; color: var(--ink); text-decoration: none; line-height: 1.3; }
+.intel-title:hover { color: var(--accent-deep); }
+.intel-why { font-size: 0.88rem; color: var(--ink-soft); margin-top: 8px; } .intel-why b { color: var(--ink); font-weight: 640; }
+.cat-chip { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.05em; text-transform: uppercase; font-weight: 700; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap; }
+.cat-chip.c-comp { color: var(--hot); background: color-mix(in srgb, var(--hot) 10%, transparent); border-color: color-mix(in srgb, var(--hot) 30%, transparent); }
+.cat-chip.c-fund { color: var(--warm); background: color-mix(in srgb, var(--warm) 13%, transparent); border-color: color-mix(in srgb, var(--warm) 32%, transparent); }
+.cat-chip.c-launch { color: var(--accent-deep); background: var(--accent-wash); border-color: color-mix(in srgb, var(--accent) 30%, transparent); }
+.cat-chip.c-res { color: var(--cold); background: color-mix(in srgb, var(--cold) 12%, transparent); border-color: color-mix(in srgb, var(--cold) 32%, transparent); }
+.cat-chip.c-ind { color: var(--ink-soft); background: var(--surface-2); border-color: var(--line); }
+.intel-badge { margin-left: auto; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-faint); }
+.intel-badge.fresh { color: var(--accent); }
 .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 70; background: var(--ink); color: var(--bg); padding: 11px 18px; border-radius: 10px; font-size: 0.85rem; font-weight: 550; box-shadow: var(--shadow-lg); }
 
 @media (max-width: 1000px) { .stats { grid-template-columns: repeat(2, 1fr); } .board { grid-template-columns: repeat(5, minmax(150px, 1fr)); overflow-x: auto; } .scorecells { gap: 8px; } }
@@ -430,6 +448,142 @@ function renderSignals() {
   <div class="feed-list">${shown.length ? shown.map(signalCard).join("") : '<div class="empty">No signals match this filter.</div>'}</div>`;
 }
 
+/* ---------- Scout — field-intel from articles (news + papers) ---------- */
+/* Seeded with the exact list Ofer shared; the paste-a-URL box below turns any
+   article link into an intel card the same way a live scouting job would. */
+const SCOUT_CATS = ["All", "Competitor", "Funding", "Launch", "Research", "Industry"];
+const CAT_CLASS = { Competitor: "c-comp", Funding: "c-fund", Launch: "c-launch", Research: "c-res", Industry: "c-ind" };
+const SCOUT_SEED = [
+  { d: 5, source: "SiliconANGLE", cat: "Funding", url: "https://siliconangle.com/2026/07/14/chai-discovery-nabs-400m-series-c-ai-designed-antibodies-reach-big-pharma/",
+    title: "Chai Discovery nabs $400M Series C as AI-designed antibodies reach Big Pharma",
+    why: "Direct competitor now valued at $3.8B, with Chai-2/3 de-novo antibody design deployed at Lilly, Pfizer and Novartis — the clearest proof yet that big pharma is buying AI protein design.",
+    action: "Watch Chai's pharma deals; prioritize accounts evaluating de-novo antibody tools." },
+  { d: 45, source: "Forbes", cat: "Industry", url: "https://www.forbes.com/sites/amyfeldman/2026/06/04/why-pfizer-and-eli-lilly-are-betting-on-this-13-billion-ai-drug-discovery-startup/",
+    title: "Why Pfizer and Eli Lilly are betting on this AI drug-discovery startup",
+    why: "Names the exact economic buyers (Pfizer, Lilly) validating AI biologics design. This is the proof-point narrative for our own pitch.",
+    action: "Use as a proof-point in outreach; map protein-engineering leads at Pfizer & Lilly." },
+  { d: 40, source: "Cradle", cat: "Competitor", url: "https://www.cradle.bio/blog/zero-shot",
+    title: "Zero-shot antibody diversification with Cradle",
+    why: "Competitor publishing a zero-shot capability (no labeled data). The scientists engaging this post are prime ICP leads — exactly what the Signals scan harvests.",
+    action: "Send to Signals — scrape the engagers on this thread into the pipeline." },
+  { d: 10, source: "Latent Labs", cat: "Launch", url: "https://www.aol.com/articles/latent-labs-launches-latent-y-070000000.html",
+    title: "Latent Labs launches Latent-Y — free daily access, on-demand credits",
+    why: "A competitor going freemium on protein design. Puts pricing/GTM pressure on the field and pulls a wave of new users worth watching.",
+    action: "Track who adopts the free tier; sharpen our differentiation vs. free push-button design." },
+  { d: 59, source: "BusinessWire", cat: "Funding", url: "https://www.businesswire.com/news/home/20260521648121/en/University-of-Manchester-Techbio-Spin-Out-Secures-%C2%A35-Million-to-Deploy-Quantum-Physics-AI-Modelling-and-Highly-Automated-Labs-to-Power-Next-Gen-Enzyme-Engineering",
+    title: "U. of Manchester spin-out Imperagen raises £5M for AI + quantum enzyme engineering",
+    why: "A funded new enzyme-engineering entrant (reporting 677× productivity gains). Both a competitor to track and a signal that enzyme-eng buyers are active in Europe.",
+    action: "Add Imperagen to the competitor watch list; scan their hiring and post engagers." },
+  { d: 12, source: "Fierce Biotech", cat: "Research", url: "https://www.fiercebiotech.com/research/nobel-laureate-jennifer-doudna-enters-ai-protein-design-arena",
+    title: "Nobel laureate Jennifer Doudna enters the AI protein-design arena",
+    why: "High-profile validation (Science paper on AI-designed nucleases, in collaboration with the Baker lab) that raises the whole field's profile and buyer awareness.",
+    action: "Thought-leadership fodder; watch for new hires at IGI / Doudna-affiliated groups." },
+  { d: 19, source: "STAT", cat: "Industry", url: "https://www.statnews.com/2026/06/30/anthropic-ai-drug-development/",
+    title: "Anthropic launches Claude Science and its own drug-development program",
+    why: "Foundation-model players are entering drug R&D directly — a strong tailwind that AI-native discovery is now mainstream. Context more than a lead source.",
+    action: "Reuse as a market-tailwind talking point; low direct-lead value." },
+  { d: 8, source: "Nature", cat: "Research", url: "https://www.nature.com/articles/s41586-026-10716-z",
+    title: "Nature: new method for generative protein design",
+    why: "Method papers surface active labs. The author list and the groups that cite it are ICP-lead candidates running real programs.",
+    action: "Pull corresponding authors → lead candidates; monitor citing institutions." },
+  { d: 24, source: "bioRxiv", cat: "Research", url: "https://www.biorxiv.org/content/10.1101/2026.06.25.732351",
+    title: "bioRxiv preprint: protein engineering campaign",
+    why: "A preprint is the earliest possible intent signal — it flags an active lab before the work is widely known or a competitor reaches them.",
+    action: "Corresponding author → early outreach candidate before the field notices." },
+  { d: 30, source: "GitHub", cat: "Competitor", url: "https://github.com/bytedance/Protenix",
+    title: "ByteDance open-sources Protenix (PX2) structure model",
+    why: "Big-tech open-sourcing a structure-prediction model commoditizes prediction and pressures paid tools. Adoption by target companies is a real signal.",
+    action: "Monitor stars/forks from target accounts; track who's building on it." },
+];
+
+const SRC_MAP = [
+  [/businesswire/i, "BusinessWire"], [/forbes/i, "Forbes"], [/statnews/i, "STAT"],
+  [/siliconangle/i, "SiliconANGLE"], [/fiercebiotech/i, "Fierce Biotech"], [/nature\.com/i, "Nature"],
+  [/biorxiv/i, "bioRxiv"], [/arxiv/i, "arXiv"], [/cradle\.bio/i, "Cradle"], [/github/i, "GitHub"],
+  [/(x\.com|twitter)/i, "X"], [/latentlabs|latent-labs/i, "Latent Labs"], [/techcrunch/i, "TechCrunch"],
+  [/genengnews/i, "GEN"], [/(endpts|endpoints)/i, "Endpoints"], [/fierce/i, "Fierce Biotech"],
+];
+const COMPETITOR_RE = /(cradle|absci|labgenius|generate|arzeda|bighat|biomatter|ginkgo|basecamp|allozymes|chai|latent|imperagen|protenix|bytedance|profluent|isomorphic)/i;
+function srcFromUrl(u) { for (const [re, name] of SRC_MAP) if (re.test(u)) return name; try { return new URL(u).hostname.replace(/^www\./, "").split(".")[0].replace(/^\w/, (c) => c.toUpperCase()); } catch (e) { return "Web"; } }
+function titleFromUrl(u) {
+  let path; try { path = new URL(u).pathname; } catch (e) { path = u; }
+  const segs = path.split("/").filter(Boolean);
+  let slug = segs.reverse().find((s) => /[a-z].*[a-z].*[a-z]/i.test(s)) || segs[0] || "";
+  slug = slug.replace(/\.(html?|pdf|php)$/i, "");
+  if (/^(s\d{5,}|10\.\d{4,}|\d{4}\.\d{2})/.test(slug) || /^\d+$/.test(slug)) return null; // DOI / id-like
+  slug = slug.replace(/[-_]+/g, " ").replace(/\b(en|news|home|article|articles|blog|story|p)\b/gi, " ").replace(/\s+/g, " ").trim();
+  if (slug.length < 8) return null;
+  return slug.charAt(0).toUpperCase() + slug.slice(1);
+}
+function catFromUrl(u) {
+  if (COMPETITOR_RE.test(u)) return "Competitor";
+  if (/(series-[a-e]|raises?|\braise\b|funding|nabs|secures?|seed|million|billion|\$\d)/i.test(u)) return "Funding";
+  if (/(launch|introduc|unveil|debut|releases?|announc)/i.test(u)) return "Launch";
+  if (/(nature\.com|biorxiv|arxiv|\/research\b|paper|preprint|doi)/i.test(u)) return "Research";
+  return "Industry";
+}
+const CAT_WHY = {
+  Competitor: "A competitor move worth tracking — the people engaging it are candidate ICP leads for the pipeline.",
+  Funding: "A funding event signals budget and momentum in the space, and often a hiring wave right behind it.",
+  Launch: "A product launch reshapes the competitive field and pulls in new users worth watching.",
+  Research: "New research surfaces active labs early — authors and citing groups are ICP-lead candidates.",
+  Industry: "Market context that shapes the narrative for outreach and positioning.",
+};
+const CAT_ACTION = {
+  Competitor: "Send to Signals — harvest the engagers on this into the pipeline.",
+  Funding: "Flag the company; watch its hiring and protein-eng leads.",
+  Launch: "Track adopters; note the differentiation angle for our pitch.",
+  Research: "Pull the authors as lead candidates; monitor citing institutions.",
+  Industry: "Reuse as a talking point; low direct-lead value.",
+};
+function parseArticleUrl(raw) {
+  let u = raw.trim(); if (!u) return null;
+  if (!/^https?:\/\//i.test(u)) u = "https://" + u;
+  if (!/\.[a-z]{2,}/i.test(u)) return null;
+  const source = srcFromUrl(u);
+  const cat = catFromUrl(u);
+  const title = titleFromUrl(u) || `${source} — ${cat.toLowerCase()} item`;
+  return { d: 0.001, source, cat, url: u, title, why: CAT_WHY[cat], action: CAT_ACTION[cat], fresh: true };
+}
+function scoutCard(s) {
+  return `<div class="sig-card intel">
+    <div class="sig-top"><span class="sig-src">${esc(s.source)}</span><span class="cat-chip ${CAT_CLASS[s.cat] || "c-ind"}">${esc(s.cat)}</span><span class="sig-when">${s.fresh ? "just now" : timeAgoDays(s.d)}</span><span class="intel-badge ${s.fresh ? "fresh" : ""}">${s.fresh ? "◆ Added" : "Field intel"}</span></div>
+    <a class="intel-title" href="${esc(s.url)}" target="_blank" rel="noreferrer">${esc(s.title)} ↗</a>
+    <div class="intel-why"><b>Why it matters —</b> ${esc(s.why)}</div>
+    <div class="sig-divider"></div>
+    <div class="sig-extract"><span class="sig-tag">Suggested action</span><span class="sig-arrow">→</span><span class="sig-outcome"><b>${esc(s.action)}</b></span></div>
+  </div>`;
+}
+function renderScout() {
+  const S = state.scout;
+  const comp = S.filter((s) => s.cat === "Competitor").length;
+  const fund = S.filter((s) => s.cat === "Funding").length;
+  const res = S.filter((s) => s.cat === "Research").length;
+  const shown = S.filter((s) => state.scoutCat === "All" || s.cat === state.scoutCat);
+  const chips = SCOUT_CATS.map((c) => `<button class="filt-chip ${state.scoutCat === c ? "active" : ""}" data-scoutcat="${esc(c)}">${esc(c)}</button>`).join("");
+  return `<div class="stats">
+    <div class="stat"><div class="n">${S.length}</div><div class="l">Articles scouted</div></div>
+    <div class="stat hot"><div class="n">${comp}</div><div class="l">Competitor moves</div></div>
+    <div class="stat warm"><div class="n">${fund}</div><div class="l">Funding events</div></div>
+    <div class="stat meet"><div class="n">${res}</div><div class="l">Research to mine</div></div>
+  </div>
+  <p class="mkt-intro">Industry articles — competitor news, funding, launches and new papers — turned into intel: what each one means for Scala and the next action to take. This list is seeded with the articles Ofer shared; paste any link below to add one.</p>
+  <div class="scout-add"><input class="scout-input" id="scout-url" type="url" placeholder="Paste an article URL (news or paper) — e.g. a Cradle post or a Nature paper" /><button class="btn primary" data-act="scout-add">＋ Scout article</button></div>
+  <p class="scout-hint">Reads the source, headline and category from the link. In the live version a scheduled job does this across the field automatically — this is the same pipeline, run by hand.</p>
+  <div class="filters"><span class="filt-lbl">Category</span>${chips}<span class="filt-count">showing ${shown.length} of ${S.length}</span></div>
+  <div class="feed-list">${shown.length ? shown.map(scoutCard).join("") : '<div class="empty">No articles in this category yet.</div>'}</div>`;
+}
+function addScoutArticle() {
+  const input = document.getElementById("scout-url");
+  const val = input ? input.value : "";
+  const card = parseArticleUrl(val);
+  if (!card) { toast("Enter a valid article URL"); return; }
+  state.scout.unshift(card);
+  state.scoutCat = "All";
+  render();
+  toast(`Scouted from ${card.source} · tagged ${card.cat}`);
+}
+
 /* ---------- heuristic triage (ported from classify.ts) ---------- */
 const NOISE = /(recruit|talent|student|intern|marketing|sales|account exec|investor relations)/i;
 const TECH2 = /(protein eng|antibody eng|enzyme eng|structural bio|biologics discovery|protein science|principal scientist)/i;
@@ -439,7 +593,7 @@ function seniorityOf(h) { h = h.toLowerCase(); if (/chief|cso|c-suite/.test(h)) 
 function inferFirmographics(t) { t = t.toLowerCase(); return { hasBiologicsPipeline: /biologic|antibody|therapeutic/.test(t), hasProteinEngTeam: /protein eng|antibody eng|enzyme eng|protein science|principal scientist/.test(t), hasStructuralBiology: /structural bio|cryo-em|crystallog/.test(t), activeProgramsPerYear: 2, rdBudgetTier: "mid" }; }
 
 /* ---------- state ---------- */
-const state = { leads: [], view: "pipeline", selectedId: null, sigComp: "All", sigRel: false, skin: "scala" };
+const state = { leads: [], view: "pipeline", selectedId: null, sigComp: "All", sigRel: false, scout: SCOUT_SEED.map((x) => ({ ...x })), scoutCat: "All", skin: "scala" };
 try { state.skin = localStorage.getItem("leadscope-skin") || "scala"; } catch (e) {}
 document.documentElement.setAttribute("data-skin", state.skin);
 function buildLeads() {
@@ -539,18 +693,20 @@ function render() {
   const heads = {
     analytics: `<div class="eyebrow">Analytics</div><h1>How the pipeline is performing.</h1><p>Funnel, signal effectiveness and volume — plus CRM export.</p>`,
     signals: `<div class="eyebrow">Market signals</div><h1>What's moving in the market.</h1><p>Live intelligence from competitor posts, hiring and funding — with the reasoning shown for every call.</p>`,
+    scout: `<div class="eyebrow">Field intel</div><h1>The field, read for you.</h1><p>Industry articles and papers turned into what-it-means and what-to-do — paste a link to add your own.</p>`,
     pipeline: `<div class="eyebrow">Ranked pipeline</div><h1>Your best next conversations, first.</h1><p>Every lead scored on fit, intent and warmth — with the reason attached.</p>`,
   };
   const head = heads[state.view] || heads.pipeline;
   let main = "";
   if (state.view === "analytics") main = renderAnalytics();
   else if (state.view === "signals") main = renderSignals();
+  else if (state.view === "scout") main = renderScout();
   else main = renderStats() + (state.view === "pipeline" ? renderPipeline() : renderBoard());
   document.getElementById("root").innerHTML = `<div class="app">
     <header class="topbar"><div class="wrap topbar-inner">
       <div class="brand"><div class="mark"></div><div class="brand-name">Scala Biodesign · <b>LeadScope</b></div></div>
       <div class="topbar-spacer"></div>
-      <div class="seg"><button data-view="pipeline" class="${state.view === "pipeline" ? "active" : ""}">Pipeline</button><button data-view="signals" class="${state.view === "signals" ? "active" : ""}">Signals</button><button data-view="board" class="${state.view === "board" ? "active" : ""}">Board</button><button data-view="analytics" class="${state.view === "analytics" ? "active" : ""}">Analytics</button></div>
+      <div class="seg"><button data-view="pipeline" class="${state.view === "pipeline" ? "active" : ""}">Pipeline</button><button data-view="signals" class="${state.view === "signals" ? "active" : ""}">Signals</button><button data-view="scout" class="${state.view === "scout" ? "active" : ""}">Scout</button><button data-view="board" class="${state.view === "board" ? "active" : ""}">Board</button><button data-view="analytics" class="${state.view === "analytics" ? "active" : ""}">Analytics</button></div>
       <button class="btn" data-act="scan">⟳ Run signal scan</button>
       <div class="theme-switch" title="Theme">${["teal","scala","midnight"].map((k)=>`<button class="theme-dot ${k} ${state.skin===k?"active":""}" data-skin-pick="${k}" title="${k[0].toUpperCase()+k.slice(1)} theme" aria-label="${k} theme"></button>`).join("")}</div>
     </div></header>
@@ -614,15 +770,17 @@ function exportCsv() {
 
 /* ---------- events ---------- */
 document.addEventListener("click", (ev) => {
-  const t = ev.target.closest("[data-act],[data-view],[data-open],[data-sigcomp],[data-sigrel],[data-skin-pick]"); if (!t) return;
+  const t = ev.target.closest("[data-act],[data-view],[data-open],[data-sigcomp],[data-sigrel],[data-scoutcat],[data-skin-pick]"); if (!t) return;
   if (t.hasAttribute("data-skin-pick")) { state.skin = t.getAttribute("data-skin-pick"); document.documentElement.setAttribute("data-skin", state.skin); try { localStorage.setItem("leadscope-skin", state.skin); } catch (e) {} render(); return; }
   if (t.hasAttribute("data-sigcomp")) { state.sigComp = t.getAttribute("data-sigcomp"); render(); return; }
   if (t.hasAttribute("data-sigrel")) { state.sigRel = !state.sigRel; render(); return; }
+  if (t.hasAttribute("data-scoutcat")) { state.scoutCat = t.getAttribute("data-scoutcat"); render(); return; }
   if (t.dataset.view) { state.view = t.dataset.view; render(); return; }
   if (t.dataset.open) { state.selectedId = t.dataset.open; render(); return; }
   const act = t.dataset.act; const l = state.leads.find((x) => x.id === state.selectedId);
   if (act === "close") { state.selectedId = null; render(); }
   else if (act === "scan") runScan();
+  else if (act === "scout-add") addScoutArticle();
   else if (act === "export") exportCsv();
   else if (act === "crm") toast("Synced " + state.leads.length + " leads → HubSpot (demo)");
   else if (act === "copy") copyText(t.dataset.body || "");
@@ -630,6 +788,7 @@ document.addEventListener("click", (ev) => {
   else if (act === "msg" && l) markMsg(l, t.dataset.mid, t.dataset.status);
 });
 document.addEventListener("change", (ev) => { const t = ev.target.closest('[data-act="stage"]'); if (!t) return; const l = state.leads.find((x) => x.id === state.selectedId); if (l) setStage(l, t.value); });
+document.addEventListener("keydown", (ev) => { if (ev.key === "Enter" && ev.target.id === "scout-url") { ev.preventDefault(); addScoutArticle(); } });
 
 buildLeads(); render();
 </script>
