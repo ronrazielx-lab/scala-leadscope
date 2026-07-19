@@ -27,8 +27,7 @@
   p { margin: 0; }
 
   header { display: flex; align-items: center; gap: 13px; margin-bottom: 6px; }
-  .mark { width: 34px; height: 34px; border-radius: 9px; flex: none; background: linear-gradient(135deg, var(--accent-bright), var(--accent-deep)); position: relative; }
-  .mark::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% 50%, #fff 0 3px, transparent 3.5px), radial-gradient(circle at 50% 50%, transparent 8px, rgba(255,255,255,.85) 8px 10px, transparent 10.5px); }
+  .logo-mark { width: 38px; height: 38px; flex: none; display: block; }
   .brand { font-family: var(--display); font-weight: 650; font-size: 1.05rem; }
   .brand b { color: var(--accent-deep); font-weight: 780; }
   .brand span { color: var(--ink-faint); font-weight: 500; }
@@ -73,6 +72,22 @@
   .gear li span { font-family: var(--mono); color: var(--accent-deep); font-variant-numeric: tabular-nums; }
   .gear.later li span { color: var(--ink-soft); }
 
+  /* worked example */
+  .example { margin-top: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 13px; padding: 16px 20px 18px; box-shadow: var(--shadow); }
+  .ex-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-bottom: 13px; border-bottom: 1px solid var(--line); }
+  .ex-name { font-family: var(--display); font-weight: 700; font-size: 1.02rem; letter-spacing: -0.01em; }
+  .ex-role { color: var(--ink-faint); font-size: 0.82rem; margin-left: 9px; }
+  .ex-pri { text-align: right; display: flex; align-items: baseline; gap: 7px; }
+  .ex-pri-n { font-family: var(--display); font-weight: 780; font-size: 1.7rem; letter-spacing: -0.03em; color: var(--coral); line-height: 1; }
+  .ex-pri-k { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-faint); }
+  .ex-scores { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 15px; }
+  .ex-s { border-left: 3px solid var(--line); padding-left: 12px; }
+  .ex-s.f { border-color: var(--accent); } .ex-s.i { border-color: var(--amber); } .ex-s.w { border-color: var(--coral); }
+  .ex-v { font-family: var(--display); font-weight: 760; font-size: 1.5rem; letter-spacing: -0.02em; line-height: 1; }
+  .ex-s.f .ex-v { color: var(--accent-deep); } .ex-s.i .ex-v { color: var(--amber); } .ex-s.w .ex-v { color: var(--coral); }
+  .ex-k { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); font-weight: 700; margin: 4px 0 6px; }
+  .ex-d { font-size: 0.78rem; color: var(--ink-soft); line-height: 1.4; }
+  .ex-foot { font-size: 0.82rem; color: var(--ink-soft); margin: 14px 0 0; }
   .foot { margin-top: 28px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; color: var(--ink-faint); font-size: 0.8rem; }
   .foot .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
   .cta { font-size: 0.86rem; color: var(--ink-soft); }
@@ -83,6 +98,7 @@
     .step:not(:last-child)::after { content: ""; }
     .gears { grid-template-columns: 1fr; }
     .score .keys { margin-left: 0; }
+    .ex-scores { grid-template-columns: 1fr; }
   }
   @media print {
     body { background: #fff; }
@@ -94,12 +110,12 @@
 <body>
 <div class="wrap">
   <header>
-    <div class="mark"></div>
+    <svg class="logo-mark" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Scala Biodesign"><path d="M24,84 L24,58 C37,58 41,30 62,30 L62,84 Z" fill="#08bec9"/><path d="M62,3 Q62,18 75,18 Q62,18 62,33 Q62,18 49,18 Q62,18 62,3 Z" fill="#9d6fe3"/></svg>
     <div class="brand">Scala Biodesign · <b>LeadScope</b> &nbsp;<span>how it works</span></div>
   </header>
 
-  <div class="lead">From market noise to <span class="hl">ready-to-contact buyers.</span></div>
-  <p class="sub">LeadScope watches the small, knowable universe of people who buy computational protein design, decides who's a real buyer, explains why, and gets your team in front of them — with a record of every call it made.</p>
+  <h1 class="lead">What LeadScope does</h1>
+  <p class="sub">Finds the people most likely to buy computational protein design, ranks them by how worth contacting they are, explains the reasoning for each, and helps the team reach out.</p>
 
   <div class="eyebrow">The process — and what happens behind the screen</div>
   <div class="flow">
@@ -143,6 +159,19 @@
       <span><b>Intent</b> — signalling a need now</span>
       <span><b>Warmth</b> — is there a way in</span>
     </div>
+  </div>
+
+  <div class="example">
+    <div class="ex-head">
+      <div class="ex-who"><span class="ex-name">Dr. Dana Reingold</span><span class="ex-role">Head of Protein Engineering · Helix Therapeutics</span></div>
+      <div class="ex-pri"><span class="ex-pri-n">74</span><span class="ex-pri-k">Priority</span></div>
+    </div>
+    <div class="ex-scores">
+      <div class="ex-s f"><div class="ex-v">88</div><div class="ex-k">Fit</div><div class="ex-d">Active biologics pipeline, in-house protein-engineering team, senior technical buyer</div></div>
+      <div class="ex-s i"><div class="ex-v">82</div><div class="ex-k">Intent</div><div class="ex-d">Commented on a competitor's antibody post 3 days ago; open req for a senior antibody engineer</div></div>
+      <div class="ex-s w"><div class="ex-v">55</div><div class="ex-k">Warmth</div><div class="ex-d">2nd-degree connection through a shared former colleague</div></div>
+    </div>
+    <p class="ex-foot">Strong fit and fresh intent, lifted by a warm way in — she lands near the top of today's list.</p>
   </div>
 
   <div class="eyebrow">What it costs</div>

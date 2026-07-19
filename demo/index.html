@@ -61,8 +61,7 @@ a { color: inherit; }
 .topbar { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
 .topbar-inner { display: flex; align-items: center; gap: 14px; padding: 14px 0; flex-wrap: wrap; }
 .brand { display: flex; align-items: center; gap: 11px; }
-.mark { width: 30px; height: 30px; border-radius: 8px; flex: none; position: relative; background: linear-gradient(135deg, var(--accent), var(--accent-deep)); }
-.mark::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 30% 32%, rgba(255,255,255,0.85) 0 2px, transparent 2.5px), radial-gradient(circle at 68% 66%, rgba(255,255,255,0.85) 0 2px, transparent 2.5px), linear-gradient(120deg, transparent 44%, rgba(255,255,255,0.55) 45% 47%, transparent 48%); }
+.logo-mark { width: 30px; height: 30px; flex: none; display: block; }
 .brand-name { font-family: var(--display); font-weight: 640; font-size: 1rem; letter-spacing: -0.01em; }
 .brand-name b { color: var(--accent); font-weight: 750; }
 .topbar-spacer { flex: 1; }
@@ -271,6 +270,12 @@ select.stage-select { flex: 1; border: 1px solid var(--line); background: var(--
 .cat-chip.c-ind { color: var(--ink-soft); background: var(--surface-2); border-color: var(--line); }
 .intel-badge { margin-left: auto; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-faint); }
 .intel-badge.fresh { color: var(--accent); }
+.scout-config { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 20px 0 6px; }
+.scout-config .btn.primary { margin-left: auto; }
+.scout-live { color: var(--ink-faint); }
+.scout-manual { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 8px 0 44px; padding-top: 16px; border-top: 1px solid var(--line); }
+.scout-manual-lbl { font-size: 0.8rem; color: var(--ink-faint); margin-right: 2px; }
+.scout-manual .scout-input { min-width: 220px; }
 .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 70; background: var(--ink); color: var(--bg); padding: 11px 18px; border-radius: 10px; font-size: 0.85rem; font-weight: 550; box-shadow: var(--shadow-lg); }
 
 @media (max-width: 1000px) { .stats { grid-template-columns: repeat(2, 1fr); } .board { grid-template-columns: repeat(5, minmax(150px, 1fr)); overflow-x: auto; } .scorecells { gap: 8px; } }
@@ -496,6 +501,31 @@ const SCOUT_SEED = [
     action: "Monitor stars/forks from target accounts; track who's building on it." },
 ];
 
+const WATCH_CATS = ["Competitor", "Funding", "Launch", "Research", "Industry"];
+/* Reserve pool — a "Run scout" pass pulls fresh, real articles into the watched topics. */
+const SCOUT_RESERVE = [
+  { d: 3, source: "Cradle", cat: "Competitor", url: "https://www.cradle.bio/blog/series-b",
+    title: "Cradle raises $73M Series B to put AI protein engineering in every lab",
+    why: "The most direct competitor is scaling hard — fresh capital aimed squarely at broad market adoption.",
+    action: "Refresh the Cradle battlecard; watch their new hires and named customers." },
+  { d: 6, source: "TechCrunch", cat: "Launch", url: "https://techcrunch.com/2025/07/21/latent-labs-launches-web-based-ai-model-to-democratize-protein-design/",
+    title: "Latent Labs launches a web-based, no-code AI model for protein design",
+    why: "Competitor pushing browser-based, no-code design — more pressure on ease-of-use and free tiers.",
+    action: "Note the no-code angle; sharpen our 'expert-grade' differentiation." },
+  { d: 4, source: "C&EN", cat: "Research", url: "https://cen.acs.org/biological-chemistry/gene-editing/ai-nuclease-design-crispr/104/web/2026/07",
+    title: "AI-designed nucleases outperform nature's own in gene editing",
+    why: "Fresh proof AI-designed enzymes are beating natural ones — a strong proof-point, and the authors are prospects.",
+    action: "Pull the authors as leads; reuse in enzyme-engineering outreach." },
+  { d: 9, source: "CNBC", cat: "Industry", url: "https://www.cnbc.com/2026/06/30/anthropic-launches-ai-drug-discovery-program-claude-science.html",
+    title: "Anthropic launches Claude Science for pharma R&D",
+    why: "Foundation-model vendors moving into R&D tooling — reinforces that AI-native discovery is now the default expectation.",
+    action: "Tailwind talking point; watch whether buyers standardize on general models." },
+  { d: 11, source: "GEN", cat: "Industry", url: "https://www.genengnews.com/topics/artificial-intelligence/pharma-races-to-scale-ai-as-billions-flow-into-drug-discovery/",
+    title: "Pharma races to scale AI as billions flow into drug discovery",
+    why: "The budget environment for our buyers is expanding fast — useful context for economic-buyer conversations.",
+    action: "Use the market-size framing with CSOs / VPs of R&D." },
+];
+
 const SRC_MAP = [
   [/businesswire/i, "BusinessWire"], [/forbes/i, "Forbes"], [/statnews/i, "STAT"],
   [/siliconangle/i, "SiliconANGLE"], [/fiercebiotech/i, "Fierce Biotech"], [/nature\.com/i, "Nature"],
@@ -559,19 +589,26 @@ function renderScout() {
   const comp = S.filter((s) => s.cat === "Competitor").length;
   const fund = S.filter((s) => s.cat === "Funding").length;
   const res = S.filter((s) => s.cat === "Research").length;
-  const shown = S.filter((s) => state.scoutCat === "All" || s.cat === state.scoutCat);
-  const chips = SCOUT_CATS.map((c) => `<button class="filt-chip ${state.scoutCat === c ? "active" : ""}" data-scoutcat="${esc(c)}">${esc(c)}</button>`).join("");
+  const shown = S.filter((s) => state.scoutWatch[s.cat]);
+  const toggles = WATCH_CATS.map((c) => `<button class="filt-toggle ${state.scoutWatch[c] ? "on" : ""}" data-scoutwatch="${c}">${state.scoutWatch[c] ? "✓ " : ""}${c}</button>`).join("");
   return `<div class="stats">
     <div class="stat"><div class="n">${S.length}</div><div class="l">Articles scouted</div></div>
     <div class="stat hot"><div class="n">${comp}</div><div class="l">Competitor moves</div></div>
     <div class="stat warm"><div class="n">${fund}</div><div class="l">Funding events</div></div>
     <div class="stat meet"><div class="n">${res}</div><div class="l">Research to mine</div></div>
   </div>
-  <p class="mkt-intro">Industry articles — competitor news, funding, launches and new papers — turned into intel: what each one means for Scala and the next action to take. This list is seeded with the articles Ofer shared; paste any link below to add one.</p>
-  <div class="scout-add"><input class="scout-input" id="scout-url" type="url" placeholder="Paste an article URL (news or paper) — e.g. a Cradle post or a Nature paper" /><button class="btn primary" data-act="scout-add">＋ Scout article</button></div>
-  <p class="scout-hint">Reads the source, headline and category from the link. In the live version a scheduled job does this across the field automatically — this is the same pipeline, run by hand.</p>
-  <div class="filters"><span class="filt-lbl">Category</span>${chips}<span class="filt-count">showing ${shown.length} of ${S.length}</span></div>
-  <div class="feed-list">${shown.length ? shown.map(scoutCard).join("") : '<div class="empty">No articles in this category yet.</div>'}</div>`;
+  <p class="mkt-intro">LeadScope scouts the field on its own — competitor news, funding, launches and new papers — then tags each find and says what to do about it. Pick what to watch; the scout does the rest. <span class="scout-live">Live, it runs every morning. In this demo, press <b>Run scout</b> to simulate a pass.</span></p>
+  <div class="scout-config"><span class="filt-lbl">Watching</span>${toggles}<button class="btn primary" data-act="scout-run">⟳ Run scout now</button><span class="filt-count">showing ${shown.length} of ${S.length}</span></div>
+  <div class="feed-list">${shown.length ? shown.map(scoutCard).join("") : '<div class="empty">Nothing in the watched topics — turn a topic back on, or run a scout.</div>'}</div>
+  <div class="scout-manual"><span class="scout-manual-lbl">Spotted something the scout missed?</span><input class="scout-input" id="scout-url" type="url" placeholder="Paste an article URL to add it manually" /><button class="btn" data-act="scout-add">＋ Add</button></div>`;
+}
+function runScoutNow() {
+  const pool = SCOUT_RESERVE.filter((r) => state.scoutWatch[r.cat] && !state.scout.some((s) => s.url === r.url));
+  if (!pool.length) { toast("Scout ran — no new articles in the watched topics right now"); return; }
+  const picked = pool.slice(0, 2);
+  picked.forEach((p) => state.scout.unshift({ ...p, fresh: true, d: 0.001 }));
+  render();
+  toast(`Scout run · +${picked.length} new article${picked.length > 1 ? "s" : ""} in your topics`);
 }
 function addScoutArticle() {
   const input = document.getElementById("scout-url");
@@ -593,7 +630,7 @@ function seniorityOf(h) { h = h.toLowerCase(); if (/chief|cso|c-suite/.test(h)) 
 function inferFirmographics(t) { t = t.toLowerCase(); return { hasBiologicsPipeline: /biologic|antibody|therapeutic/.test(t), hasProteinEngTeam: /protein eng|antibody eng|enzyme eng|protein science|principal scientist/.test(t), hasStructuralBiology: /structural bio|cryo-em|crystallog/.test(t), activeProgramsPerYear: 2, rdBudgetTier: "mid" }; }
 
 /* ---------- state ---------- */
-const state = { leads: [], view: "pipeline", selectedId: null, sigComp: "All", sigRel: false, scout: SCOUT_SEED.map((x) => ({ ...x })), scoutCat: "All", skin: "scala" };
+const state = { leads: [], view: "pipeline", selectedId: null, sigComp: "All", sigRel: false, scout: SCOUT_SEED.map((x) => ({ ...x })), scoutWatch: { Competitor: true, Funding: true, Launch: true, Research: true, Industry: true }, skin: "scala" };
 try { state.skin = localStorage.getItem("leadscope-skin") || "scala"; } catch (e) {}
 document.documentElement.setAttribute("data-skin", state.skin);
 function buildLeads() {
@@ -704,7 +741,7 @@ function render() {
   else main = renderStats() + (state.view === "pipeline" ? renderPipeline() : renderBoard());
   document.getElementById("root").innerHTML = `<div class="app">
     <header class="topbar"><div class="wrap topbar-inner">
-      <div class="brand"><div class="mark"></div><div class="brand-name">Scala Biodesign · <b>LeadScope</b></div></div>
+      <div class="brand"><svg class="logo-mark" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Scala Biodesign"><path d="M24,84 L24,58 C37,58 41,30 62,30 L62,84 Z" fill="#08bec9"/><path d="M62,3 Q62,18 75,18 Q62,18 62,33 Q62,18 49,18 Q62,18 62,3 Z" fill="#9d6fe3"/></svg><div class="brand-name">Scala Biodesign · <b>LeadScope</b></div></div>
       <div class="topbar-spacer"></div>
       <div class="seg"><button data-view="pipeline" class="${state.view === "pipeline" ? "active" : ""}">Pipeline</button><button data-view="signals" class="${state.view === "signals" ? "active" : ""}">Signals</button><button data-view="scout" class="${state.view === "scout" ? "active" : ""}">Scout</button><button data-view="board" class="${state.view === "board" ? "active" : ""}">Board</button><button data-view="analytics" class="${state.view === "analytics" ? "active" : ""}">Analytics</button></div>
       <button class="btn" data-act="scan">⟳ Run signal scan</button>
@@ -770,16 +807,17 @@ function exportCsv() {
 
 /* ---------- events ---------- */
 document.addEventListener("click", (ev) => {
-  const t = ev.target.closest("[data-act],[data-view],[data-open],[data-sigcomp],[data-sigrel],[data-scoutcat],[data-skin-pick]"); if (!t) return;
+  const t = ev.target.closest("[data-act],[data-view],[data-open],[data-sigcomp],[data-sigrel],[data-scoutwatch],[data-skin-pick]"); if (!t) return;
   if (t.hasAttribute("data-skin-pick")) { state.skin = t.getAttribute("data-skin-pick"); document.documentElement.setAttribute("data-skin", state.skin); try { localStorage.setItem("leadscope-skin", state.skin); } catch (e) {} render(); return; }
   if (t.hasAttribute("data-sigcomp")) { state.sigComp = t.getAttribute("data-sigcomp"); render(); return; }
   if (t.hasAttribute("data-sigrel")) { state.sigRel = !state.sigRel; render(); return; }
-  if (t.hasAttribute("data-scoutcat")) { state.scoutCat = t.getAttribute("data-scoutcat"); render(); return; }
+  if (t.hasAttribute("data-scoutwatch")) { const c = t.getAttribute("data-scoutwatch"); state.scoutWatch[c] = !state.scoutWatch[c]; render(); return; }
   if (t.dataset.view) { state.view = t.dataset.view; render(); return; }
   if (t.dataset.open) { state.selectedId = t.dataset.open; render(); return; }
   const act = t.dataset.act; const l = state.leads.find((x) => x.id === state.selectedId);
   if (act === "close") { state.selectedId = null; render(); }
   else if (act === "scan") runScan();
+  else if (act === "scout-run") runScoutNow();
   else if (act === "scout-add") addScoutArticle();
   else if (act === "export") exportCsv();
   else if (act === "crm") toast("Synced " + state.leads.length + " leads → HubSpot (demo)");
